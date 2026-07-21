@@ -1,0 +1,145 @@
+import { app, BrowserWindow, ipcMain, screen, session } from 'electron'
+import { join } from 'node:path'
+import { is } from '@electron-toolkit/utils'
+import { loadAppData, saveAppData } from './storage'
+import { notify } from './notifications'
+import type { AppData } from '../src/storage/defaultData'
+
+const COMPACT_SIZE = { width: 340, height: 560 }
+const EXPANDED_SIZE = { width: 420, height: 640 }
+
+// Unwind 减压主界面（本地 FastAPI 后端渲染）。桌面端最大红利：
+// Electron 视 127.0.0.1 为可信源，语音三件套（按住说话/通话/跟随呼吸）全部可用。
+const UNWIND_URL = 'http://127.0.0.1:8000/showcase'
+const UNWIND_SIZE = { width: 1320, height: 880 }
+
+if (is.dev) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9223')
+}
+
+let mainWindow: BrowserWindow | null = null
+let unwindWindow: BrowserWindow | null = null
+
+function openUnwindWindow(): void {
+  if (unwindWindow && !unwindWindow.isDestroyed()) {
+    unwindWindow.show()
+    unwindWindow.focus()
+    return
+  }
+  unwindWindow = new BrowserWindow({
+    width: UNWIND_SIZE.width,
+    height: UNWIND_SIZE.height,
+    title: 'Unwind · 把压力，呼出去',
+    backgroundColor: '#eef0ec',
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  })
+  unwindWindow.on('closed', () => {
+    unwindWindow = null
+  })
+  void unwindWindow.loadURL(UNWIND_URL)
+}
+
+function createWindow(): void {
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width: screenWidth } = primaryDisplay.workAreaSize
+
+  mainWindow = new BrowserWindow({
+    width: COMPACT_SIZE.width,
+    height: COMPACT_SIZE.height,
+    x: screenWidth - COMPACT_SIZE.width - 40,
+    y: 80,
+    frame: false,
+    resizable: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    alwaysOnTop: true,
+    skipTaskbar: false,
+    webPreferences: {
+      preload: join(__dirname, '../preload/preload.mjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      // electron-vite 输出 ESM preload(.mjs)，Electron 仅在关闭 renderer
+      // 沙箱时才能加载 ESM preload——否则桥接静默失败，所有 IPC 变成空转
+      sandbox: false
+    }
+  })
+
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+}
+
+function registerIpcHandlers(): void {
+  ipcMain.handle('app-data:load', (): AppData => loadAppData())
+
+  ipcMain.handle('app-data:save', (_event, data: AppData): void => {
+    saveAppData(data)
+  })
+
+  ipcMain.handle('window:set-compact-mode', (_event, compact: boolean): void => {
+    if (!mainWindow) return
+    const size = compact ? COMPACT_SIZE : EXPANDED_SIZE
+    mainWindow.setResizable(true)
+    mainWindow.setSize(size.width, size.height, true)
+    mainWindow.setResizable(false)
+  })
+
+  ipcMain.handle('window:set-always-on-top', (_event, alwaysOnTop: boolean): void => {
+    mainWindow?.setAlwaysOnTop(alwaysOnTop)
+  })
+
+  ipcMain.handle('notification:show', (_event, title: string, body: string): void => {
+    notify(title, body)
+  })
+
+  ipcMain.handle('unwind:open', (): void => {
+    openUnwindWindow()
+  })
+
+  // 桌宠透明区域点击穿透：鼠标不在小人/交互件上时，点击落到桌面
+  ipcMain.handle('window:set-click-through', (_event, ignore: boolean): void => {
+    mainWindow?.setIgnoreMouseEvents(ignore, { forward: true })
+  })
+
+  // 小人对话直连 Unwind 决策后端；在主进程发请求，天然无 CORS 问题
+  ipcMain.handle('unwind:chat', async (_event, text: string): Promise<unknown> => {
+    const resp = await fetch('http://127.0.0.1:8000/showcase/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ request_text: text })
+    })
+    if (!resp.ok) throw new Error(`unwind backend HTTP ${resp.status}`)
+    return await resp.json()
+  })
+}
+
+app.whenReady().then(() => {
+  // Unwind 页面需要麦克风（语音通话/跟随呼吸）与通知权限
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'media' || permission === 'notifications')
+  })
+  registerIpcHandlers()
+  loadAppData()
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+// 兜底：万一穿透状态卡住，窗口获得焦点/被激活时恢复可交互
+app.on('browser-window-focus', () => {
+  mainWindow?.setIgnoreMouseEvents(false)
+})
+app.on('activate', () => {
+  mainWindow?.setIgnoreMouseEvents(false)
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})

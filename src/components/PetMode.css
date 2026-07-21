@@ -1,0 +1,192 @@
+/* 桌面宠物形态：无卡片、无边框，小人直接悬浮在桌面上 */
+
+.pet-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 44px 10px 12px;
+  -webkit-app-region: no-drag;
+}
+
+/* 顶部细条作为拖拽把手（悬停时可见） */
+.pet-shell .drag-region {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 26px;
+  border-radius: 999px;
+  -webkit-app-region: drag;
+  background: rgba(122, 102, 80, 0);
+  transition: background 0.2s ease;
+}
+/* 把手保持完全隐形（拖拽功能仍在）；可见的拖拽点是下方状态胶囊 */
+
+/* 说话气泡 */
+.pet-bubble {
+  max-width: 300px;
+  min-height: 20px;
+  padding: 9px 14px;
+  border-radius: 16px;
+  border-bottom-left-radius: 5px;
+  background: rgba(255, 255, 252, 0.96);
+  border: 1.5px solid #e7d6b8;
+  box-shadow: 0 2px 8px rgba(90, 62, 40, 0.10);
+  font-size: 13px;
+  line-height: 1.7;
+  color: #5d4c3a;
+  text-align: left;
+  animation: petBubbleIn 0.3s ease;
+}
+.pet-bubble.busy {
+  color: #a8967d;
+}
+@keyframes petBubbleIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 小人本体：剥掉 stage 的卡片壳。
+   global.css 的 button:hover 是淡黄底(#fceecf)且伪类优先级更高，
+   必须把所有状态显式压成透明，否则点击/悬停小人会出现黄色方块 */
+.pet-body,
+.pet-body:hover,
+.pet-body:active,
+.pet-body:focus,
+.pet-body:focus-visible {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0;
+}
+.pet-body {
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+.pet-body:hover { transform: translateY(-2px) scale(1.02); }
+.pet-body:active { transform: scale(0.98); }
+.pet-body .stage {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+.pet-body .stage .bubble { display: none; }
+
+.pet-status {
+  -webkit-app-region: drag;
+  cursor: grab;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: rgba(122, 102, 80, 0.75);
+  background: rgba(255, 250, 241, 0.8);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+
+/* 对话区 */
+.pet-chat {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: petBubbleIn 0.25s ease;
+}
+.pet-chips {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pet-chips button {
+  border: 1.5px solid #e7d6b8;
+  background: rgba(255, 255, 252, 0.92);
+  color: #7a6650;
+  border-radius: 999px;
+  font-size: 11.5px;
+  padding: 5px 11px;
+  cursor: pointer;
+}
+.pet-chips button:hover { background: #fff1e0; color: #a05a3c; }
+.pet-chips button:disabled { opacity: 0.5; cursor: wait; }
+
+.pet-input-row {
+  display: flex;
+  gap: 6px;
+}
+.pet-input-row input {
+  flex: 1;
+  border: 1.5px solid #e7d6b8;
+  border-radius: 12px;
+  background: rgba(255, 255, 252, 0.96);
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #5d4c3a;
+  outline: none;
+}
+.pet-input-row input:focus { border-color: #d8a86e; }
+.pet-input-row button {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e8935f, #d06a45);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 16px;
+  cursor: pointer;
+}
+.pet-input-row button:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+/* 底部工具条：悬停浮现 */
+.pet-toolbar {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.pet-shell:hover .pet-toolbar { opacity: 1; }
+.pet-toolbar button {
+  border: none;
+  background: rgba(122, 102, 80, 0.12);
+  color: #6b5a44;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+.pet-toolbar button:hover { background: rgba(122, 102, 80, 0.22); }
+
+
+/* 按住说话 */
+.pet-mic-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pet-mic {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1.5px solid #e7d6b8;
+  background: rgba(255, 255, 252, 0.96);
+  font-size: 19px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  -webkit-app-region: no-drag;
+  user-select: none;
+  touch-action: none;
+}
+.pet-mic:hover { transform: scale(1.06); background: rgba(255, 255, 252, 0.96); }
+.pet-mic.holding {
+  background: linear-gradient(135deg, #e8935f, #cf5843);
+  border-color: transparent;
+  animation: micPulse 1.1s ease-in-out infinite;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(207, 88, 67, 0.35); }
+  50% { box-shadow: 0 0 0 10px rgba(207, 88, 67, 0); }
+}
