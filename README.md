@@ -39,6 +39,8 @@
 
 `backend/` 是后端仓库的源码快照（不含 `.venv`/密钥/数据库/音频产物），演进以 [aLittlecrocodile/Floppy](https://github.com/aLittlecrocodile/Floppy) 的 `unwind` 分支为准，用 `git archive` 同步。
 
+**前后端对接契约**：桌面端只依赖 [backend/docs/frontend/desktop_integration.md](backend/docs/frontend/desktop_integration.md) 描述的接口面（`/showcase/chat`、`/voice/ws`、音频 URL 约定与降级规则）——改动任何一侧前先对照它。
+
 ## 运行
 
 前置：Node 18+、Python 3.11+、macOS（桌宠特性按 macOS 调教）。两个进程都要起：
