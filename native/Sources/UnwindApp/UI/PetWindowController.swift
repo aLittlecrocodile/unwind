@@ -37,13 +37,9 @@ final class PetWindowController: NSWindowController {
     private var storeObservers: [UUID] = []
     private var audioObserver: UUID?
     private var isExpanded = false
-    private var collapsedBuddyLeading: NSLayoutConstraint!
-    private var collapsedBuddyBottom: NSLayoutConstraint!
-    private var expandedBuddyCenter: NSLayoutConstraint!
-    private var expandedBuddyBottom: NSLayoutConstraint!
 
-    private let collapsedContentSize = NSSize(width: 96, height: 96)
-    private let expandedContentSize = NSSize(width: 340, height: 310)
+    private let collapsedContentSize = NSSize(width: 108, height: 108)
+    private let expandedContentSize = NSSize(width: 340, height: 370)
 
     init(store: AppStore = .shared, backend: BackendClientProtocol = BackendClient.shared) {
         self.store = store
@@ -114,18 +110,13 @@ final class PetWindowController: NSWindowController {
         toolbarCard.addSubview(toolbar); pin(toolbar, to: toolbarCard, inset: 5)
         root.addSubview(toolbarCard)
 
-        [chatCard, buddy, toolbarCard].forEach { $0.translatesAutoresizingMaskIntoConstraints = false }
-        collapsedBuddyLeading = buddy.leadingAnchor.constraint(equalTo: root.leadingAnchor)
-        collapsedBuddyBottom = buddy.bottomAnchor.constraint(equalTo: root.bottomAnchor)
-        expandedBuddyCenter = buddy.centerXAnchor.constraint(equalTo: root.centerXAnchor)
-        expandedBuddyBottom = buddy.bottomAnchor.constraint(equalTo: toolbarCard.topAnchor, constant: 14)
-        NSLayoutConstraint.activate([
-            chatCard.bottomAnchor.constraint(equalTo: buddy.topAnchor, constant: 24), chatCard.centerXAnchor.constraint(equalTo: root.centerXAnchor), chatCard.widthAnchor.constraint(equalToConstant: 310),
-            buddy.widthAnchor.constraint(equalToConstant: 96), buddy.heightAnchor.constraint(equalToConstant: 96),
-            micButton.widthAnchor.constraint(equalToConstant: 30), micButton.heightAnchor.constraint(equalToConstant: 30),
-            toolbarCard.centerXAnchor.constraint(equalTo: root.centerXAnchor), toolbarCard.bottomAnchor.constraint(equalTo: root.bottomAnchor, constant: -10), toolbarCard.heightAnchor.constraint(equalToConstant: 38),
-            collapsedBuddyLeading, collapsedBuddyBottom
-        ])
+        // The desktop pet switches between two known sizes.  Frames make the
+        // expanded layout deterministic: chat (top), character (middle), and
+        // controls (bottom) cannot overlap as the card contents change.
+        [chatCard, buddy, toolbarCard].forEach { $0.translatesAutoresizingMaskIntoConstraints = true }
+        micButton.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        micButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        layoutPet(expanded: false)
         applyExpandedState()
     }
 
@@ -157,16 +148,13 @@ final class PetWindowController: NSWindowController {
         guard let window, let root = window.contentView else { return }
         let oldBuddyOrigin = window.convertPoint(toScreen: buddy.frame.origin)
         isExpanded.toggle()
-        collapsedBuddyLeading.isActive = !isExpanded
-        collapsedBuddyBottom.isActive = !isExpanded
-        expandedBuddyCenter.isActive = isExpanded
-        expandedBuddyBottom.isActive = isExpanded
         applyExpandedState()
 
         let contentSize = isExpanded ? expandedContentSize : collapsedContentSize
         var frame = window.frame
         frame.size = window.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize)).size
         window.setFrame(frame, display: false)
+        layoutPet(expanded: isExpanded)
         root.layoutSubtreeIfNeeded()
         let newBuddyOrigin = window.convertPoint(toScreen: buddy.frame.origin)
         frame = window.frame
@@ -180,6 +168,22 @@ final class PetWindowController: NSWindowController {
             window.makeFirstResponder(input)
         } else {
             window.makeFirstResponder(nil)
+        }
+    }
+
+    private func layoutPet(expanded: Bool) {
+        if expanded {
+            // Content view is non-flipped: y=0 is the bottom.  These values form
+            // Three independent bands: chat card → character → toolbar.
+            // The card uses its content height (rather than extra empty space),
+            // while the 42pt/52pt gaps keep it from covering the PNG artwork.
+            chatCard.frame = NSRect(x: 15, y: 225, width: 310, height: 108)
+            buddy.frame = NSRect(x: 122, y: 110, width: 108, height: 108)
+            toolbarCard.frame = NSRect(x: 66, y: 75, width: 208, height: 38)
+        } else {
+            buddy.frame = NSRect(origin: .zero, size: collapsedContentSize)
+            chatCard.frame = .zero
+            toolbarCard.frame = .zero
         }
     }
 

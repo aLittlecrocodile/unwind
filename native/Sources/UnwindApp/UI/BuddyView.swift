@@ -35,10 +35,16 @@ final class BuddyView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         guard let image = gender == .male ? maleImage : femaleImage else { return }
+        // Crop only transparent padding, with a 12px safety margin on every side,
+        // before scaling the complete opaque character into the 96×96 pet area.
+        // This avoids the card overlay/canvas margins making the supplied artwork
+        // look cut off.
         let sourceRect = gender == .male
-            ? NSRect(x: 210, y: 135, width: 725, height: 695)
-            : NSRect(x: 200, y: 145, width: 735, height: 685)
+            ? NSRect(x: 200, y: 142, width: 718, height: 718)
+            : NSRect(x: 208, y: 146, width: 718, height: 718)
         image.draw(
+            // A square destination intentionally scales the entire supplied
+            // character to the desktop-pet target, without clipping it.
             in: bounds.insetBy(dx: 1, dy: 1),
             from: sourceRect,
             operation: .sourceOver,
