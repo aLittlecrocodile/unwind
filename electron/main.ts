@@ -54,6 +54,10 @@ function createWindow(): void {
     backgroundColor: '#00000000',
     alwaysOnTop: true,
     skipTaskbar: false,
+    // 小人贴在窗口底部，而 macOS 默认把窗口顶边钳在菜单栏以下——
+    // 560px 高的窗口顶边卡死在 y=33，小人就永远升不过半屏。
+    // 开这个开关允许窗口顶边越出屏幕，拖动范围交给 move-to 里的手动钳制。
+    enableLargerThanScreen: true,
     webPreferences: {
       preload: join(__dirname, '../preload/preload.mjs'),
       contextIsolation: true,
@@ -138,7 +142,18 @@ function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('window:move-to', (_event, x: number, y: number): void => {
-    mainWindow?.setPosition(Math.round(x), Math.round(y))
+    if (!mainWindow) return
+    // enableLargerThanScreen 关掉了系统钳制，这里自己兜底：
+    // 以窗口底边（小人的脚）为锚点——脚最高到工作区顶部下方 160px（小人整体可见），
+    // 最低不沉出屏幕底；水平方向至少留 80px 在屏内，保证永远抓得回来。
+    const { width, height } = mainWindow.getBounds()
+    const wa = screen.getDisplayNearestPoint({
+      x: Math.round(x + width / 2),
+      y: Math.round(y + height)
+    }).workArea
+    const clampedX = Math.min(Math.max(x, wa.x - width + 80), wa.x + wa.width - 80)
+    const bottom = Math.min(Math.max(y + height, wa.y + 160), wa.y + wa.height)
+    mainWindow.setPosition(Math.round(clampedX), Math.round(bottom - height))
   })
 
   // 小人对话直连 Unwind 决策后端；在主进程发请求，天然无 CORS 问题
