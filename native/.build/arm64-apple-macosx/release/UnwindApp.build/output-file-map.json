@@ -1,0 +1,127 @@
+{
+  "": {
+    "dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/UnwindApp.d",
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/UnwindApp.o",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/primary.swiftdeps"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/App/AppDelegate.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppDelegate.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppDelegate.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppDelegate.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/App/SelfTests.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/SelfTests.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/SelfTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/SelfTests.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/SelfTests.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Audio/AudioCoordinator.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AudioCoordinator.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AudioCoordinator~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AudioCoordinator.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AudioCoordinator.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Audio/PCMCodec.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PCMCodec.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PCMCodec~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PCMCodec.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PCMCodec.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Features/ComfortCardRenderer.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ComfortCardRenderer.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ComfortCardRenderer~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ComfortCardRenderer.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ComfortCardRenderer.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Models/AppModels.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppModels.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppModels.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppModels.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Models/BackendModels.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendModels.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendModels~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendModels.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendModels.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Models/JSONValue.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/JSONValue.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/JSONValue~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/JSONValue.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/JSONValue.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Networking/BackendClient.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendClient.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendClient.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BackendClient.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/Networking/VoiceClients.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/VoiceClients.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/VoiceClients~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/VoiceClients.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/VoiceClients.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/State/AppStore.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppStore.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppStore.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/AppStore.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/BreathingWindowController.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BreathingWindowController.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BreathingWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BreathingWindowController.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BreathingWindowController.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/BuddyView.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BuddyView.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BuddyView~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BuddyView.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/BuddyView.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/CallWindowController.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/CallWindowController.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/CallWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/CallWindowController.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/CallWindowController.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/PetWindowController.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PetWindowController.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PetWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PetWindowController.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/PetWindowController.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/RippleView.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/RippleView.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/RippleView~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/RippleView.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/RippleView.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/UnwindWindowController.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/UnwindWindowController.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/UnwindWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/UnwindWindowController.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/UnwindWindowController.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/ViewHelpers.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ViewHelpers.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ViewHelpers~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ViewHelpers.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/ViewHelpers.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/UI/WorkbenchWindowController.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/WorkbenchWindowController.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/WorkbenchWindowController~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/WorkbenchWindowController.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/WorkbenchWindowController.dia"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/Sources/UnwindApp/main.swift": {
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/main.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/main.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/release/UnwindApp.build/main.dia"
+  }
+}

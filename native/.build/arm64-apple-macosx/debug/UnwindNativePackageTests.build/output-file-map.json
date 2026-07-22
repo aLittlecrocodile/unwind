@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/primary.swiftdeps"
+  },
+  "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.derived/runner.swift": {
+    "dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/runner.d",
+    "object": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/runner.dia"
+  }
+}

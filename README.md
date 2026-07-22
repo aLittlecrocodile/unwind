@@ -32,6 +32,8 @@
 ```
 .
 ├── backend/     Unwind 后端（FastAPI + Hermes 智能体决策层，独立仓库 aLittlecrocodile/Floppy 的源码快照）
+├── native/      Swift 6 + AppKit 原生 macOS 前端
+├── scripts/     原生 `.app` 构建脚本
 ├── electron/    Electron 主进程 / preload（小人窗口、点击穿透、手动拖拽、语音代理、Unwind 主窗）
 ├── src/         React 渲染层（桌宠 PetMode、番茄钟工作台、语音 PTT、领域模型）
 └── ...
@@ -42,6 +44,35 @@
 **前后端对接契约**：桌面端只依赖 [backend/docs/frontend/desktop_integration.md](backend/docs/frontend/desktop_integration.md) 描述的接口面（`/showcase/chat`、`/voice/ws`、音频 URL 约定与降级规则）——改动任何一侧前先对照它。
 
 ## 运行
+
+### 原生 macOS 前端（Swift + AppKit）
+
+原生版要求 macOS 13+，使用系统 SwiftPM 构建，不需要 Node、Electron 或完整 Xcode。后端仍需单独启动：
+
+```bash
+# 1. 后端
+cd backend
+source .venv/bin/activate
+uvicorn floppy_backend.main:app --host 127.0.0.1 --port 8000
+
+# 2. 原生前端（另开终端）
+./scripts/build-macos-app.sh
+open dist/Unwind.app
+```
+
+开发时也可以直接运行：
+
+```bash
+cd native
+swift run Unwind
+
+# Command Line Tools 环境下的内置测试（无需完整 Xcode）
+swift run Unwind --self-test
+```
+
+原生版与 Electron 版暂时并存，待功能验收后再移除旧前端。
+
+### Electron 旧前端
 
 前置：Node 18+、Python 3.11+、macOS（桌宠特性按 macOS 调教）。两个进程都要起：
 
@@ -75,6 +106,6 @@ npm run dev
 
 ## 技术栈
 
-electron-vite · Electron 39 · React 19 · TypeScript · FastAPI。主进程代理后端 HTTP/WS（无 CORS 负担），渲染层负责桌宠交互与音频播放。
+当前主前端为 Swift 6 + AppKit + AVFoundation，使用 SwiftPM 构建；后端为 FastAPI。Electron 39 + React 19 + TypeScript 仅作为迁移验收期间的旧版对照，确认功能对齐后再移除。
 
 > 两个踩坑记录：electron-vite 输出 ESM preload，`BrowserWindow` 需 `sandbox: false` 才能加载桥接；`-webkit-app-region: drag` 在"透明+无边框+点击穿透"窗口上不可靠，拖拽是 pointer 事件 + IPC 手动实现的（详见 `electron/main.ts` 与 `src/components/PetMode.tsx` 注释）。
