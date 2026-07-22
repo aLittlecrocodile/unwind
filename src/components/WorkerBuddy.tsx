@@ -28,7 +28,10 @@ export function WorkerBuddy({ state, bubbleOverride }: WorkerBuddyProps): React.
 
         <div className="head">
           <div className="hair" />
-          <div className="face">{face}</div>
+          <div className="face">
+            <span className="face-open">{face}</span>
+            <span className="face-blink" aria-hidden="true">-_-</span>
+          </div>
         </div>
         <div className="torso" />
         <div className="arm left" />

@@ -9,6 +9,9 @@ export interface WorkerBuddyApi {
   openUnwind(): Promise<void>
   unwindChat(text: string): Promise<UnwindReply>
   setClickThrough(ignore: boolean): Promise<void>
+  hidePet(ms: number): Promise<void>
+  getPetPosition(): Promise<[number, number]>
+  movePetTo(x: number, y: number): Promise<void>
 }
 
 export interface UnwindReply {

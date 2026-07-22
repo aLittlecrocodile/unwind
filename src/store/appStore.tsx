@@ -139,7 +139,10 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'focus-phase-finished': {
       const block: CompletedFocusBlock = { completedAt: Date.now(), preset: state.focusSession.preset }
-      const health = state.health.lastStandAt && Date.now() - state.health.lastStandAt < 1
+      // 起身打卡有效期覆盖"刚结束的这个专注段"，而不是"最近 1 毫秒"——
+      // 后者几乎不可能为真，导致哪怕这一段里刚起身过，久坐计数照样 +1。
+      const blockStartedAt = Date.now() - state.focusSession.phaseDurationSeconds * 1000
+      const health = state.health.lastStandAt !== null && state.health.lastStandAt >= blockStartedAt
         ? state.health
         : recordSatThroughFocusBlock(state.health)
       return {

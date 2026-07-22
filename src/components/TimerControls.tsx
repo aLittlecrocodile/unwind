@@ -45,7 +45,7 @@ export function TimerControls({
       {phase === 'idle' ? (
         <div className="preset-row">
           {[25, 50, 90].map((value) => (
-            <button key={value} type="button" onClick={() => onStart(value as FocusPreset)}>
+            <button key={value} type="button" className="btn-primary" onClick={() => onStart(value as FocusPreset)}>
               {value}m
             </button>
           ))}

@@ -3,6 +3,9 @@
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: #4b3f33;
   background: transparent;
+  /* 强调色统一用朱砂——衔接 Unwind 大窗的水墨视觉，替换掉原来的橙色渐变 */
+  --accent: #c05a3d;
+  --accent-deep: #a34430;
 }
 
 * {
@@ -56,6 +59,17 @@ button:active {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+/* 主按钮：一屏只给最关键的动作（如开始专注的时长选择） */
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: var(--accent-deep);
 }
 
 input,
@@ -195,8 +209,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 220px;
-  overflow: auto;
+  /* 不设内层 max-height：滚动统一交给外层 app-shell，避免嵌套滚动条 */
 }
 
 .task-row {
@@ -244,7 +257,7 @@ select {
 }
 
 .task-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: #9a846a;
 }
 
@@ -277,7 +290,7 @@ select {
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 12px;
   color: #9a846a;
 }
 
@@ -321,4 +334,13 @@ select {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+/* 工作台里小人只是配角：整体缩小，把纵向空间还给番茄钟和任务列表
+   （zoom 影响布局尺寸，Electron 只跑 Chromium，可以放心用）。
+   flex-shrink 必须关掉：stage 有 overflow:hidden，作为 flex item 它的
+   min-height 是 0，内容一超高整张卡片会被压成一条缝。 */
+.app-shell .stage {
+  zoom: 0.78;
+  flex-shrink: 0;
 }

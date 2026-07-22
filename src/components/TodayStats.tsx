@@ -13,7 +13,7 @@ export function TodayStats({ stats }: TodayStatsProps): React.JSX.Element {
       </div>
       <div className="stat-item">
         <span className="stat-value">{stats.focusMinutes}</span>
-        <span className="stat-label">分钟</span>
+        <span className="stat-label">专注分钟</span>
       </div>
       <div className="stat-item">
         <span className="stat-value">{stats.tasksCompleted}</span>

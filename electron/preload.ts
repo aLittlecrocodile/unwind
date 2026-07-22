@@ -9,7 +9,10 @@ const api = {
   notify: (title: string, body: string): Promise<void> => ipcRenderer.invoke('notification:show', title, body),
   openUnwind: (): Promise<void> => ipcRenderer.invoke('unwind:open'),
   unwindChat: (text: string): Promise<unknown> => ipcRenderer.invoke('unwind:chat', text),
-  setClickThrough: (ignore: boolean): Promise<void> => ipcRenderer.invoke('window:set-click-through', ignore)
+  setClickThrough: (ignore: boolean): Promise<void> => ipcRenderer.invoke('window:set-click-through', ignore),
+  hidePet: (ms: number): Promise<void> => ipcRenderer.invoke('window:hide-temporarily', ms),
+  getPetPosition: (): Promise<[number, number]> => ipcRenderer.invoke('window:get-position'),
+  movePetTo: (x: number, y: number): Promise<void> => ipcRenderer.invoke('window:move-to', x, y)
 }
 
 contextBridge.exposeInMainWorld('workerBuddy', api)

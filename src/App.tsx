@@ -25,8 +25,9 @@ function AppContent(): React.JSX.Element {
   useEffect(() => {
     if (!state.loaded) return
     if (state.focusSession.phase === 'break') {
-      api?.notify('该休息了', '打工小人喊 Unwind 来陪你喘口气。')
-      api?.openUnwind()
+      // 只通知,不抢屏:减压产品不该自己制造压迫感。
+      // 大窗由小人气泡里的"喘口气"邀请 chip 打开,主动权在用户手里。
+      api?.notify('该休息了', '这轮打完了,小人想陪你喘口气。')
     }
   }, [api, state.focusSession.phase, state.loaded])
 
@@ -51,11 +52,22 @@ function AppContent(): React.JSX.Element {
       ? `专注中 · ${currentTask?.title ?? '未命名任务'} · ${Math.ceil(remainingSeconds / 60)}m`
       : phase === 'break'
         ? '休息中 · 喘口气吧'
-        : '待命中 · 点我聊聊'
+        : phase === 'paused'
+          ? '已暂停 · 去工作台继续'
+          : '待命中 · 点我聊聊'
+    const phaseTotal = state.focusSession.phaseDurationSeconds
+    const progress = (phase === 'focus' || phase === 'break') && phaseTotal > 0
+      ? 1 - remainingSeconds / phaseTotal
+      : null
     return (
       <PetMode
         buddyState={buddyState}
         statusLine={statusLine}
+        progress={progress}
+        waterDue={waterDue}
+        tiredDue={tiredDue}
+        onStandUp={() => dispatch({ type: 'confirm-stood-up' })}
+        onDrinkWater={() => dispatch({ type: 'confirm-drank-water' })}
         onExpand={() => dispatch({ type: 'set-compact-mode', compact: false })}
       />
     )
