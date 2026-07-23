@@ -113,11 +113,11 @@ final class WorkbenchWindowController: NSWindowController {
         taskStack.arrangedSubviews.forEach { taskStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         if store.sortedTasks.isEmpty { taskStack.addArrangedSubview(NSTextField.label("还没有任务，先给小人安排点活。", font: .systemFont(ofSize: 8), color: .secondaryLabelColor)) }
         for task in store.sortedTasks {
-            let check = ActionButton(task.done ? "✓" : "○", bezelStyle: .inline) { [weak self] in self?.store.completeTask(task.id) }.compactFont()
-            let select = ActionButton(task.title, bezelStyle: .inline) { [weak self] in self?.store.selectTask(task.id) }.compactFont()
+            let check = ActionButton(task.done ? "✓" : "○", bezelStyle: .inline) { [weak self] in self?.store.completeTask(task.id) }.taskRowFont()
+            let select = ActionButton(task.title, bezelStyle: .inline) { [weak self] in self?.store.selectTask(task.id) }.taskRowFont()
             select.alignment = .left
             select.isEnabled = !task.done
-            let remove = ActionButton("×", bezelStyle: .inline) { [weak self] in self?.store.deleteTask(task.id) }.compactFont()
+            let remove = ActionButton("×", bezelStyle: .inline) { [weak self] in self?.store.deleteTask(task.id) }.taskRowFont()
             let row = NSStackView.horizontal(spacing: 4, views: [check, select, remove])
             row.distribution = .fill
             taskStack.addArrangedSubview(row)
@@ -182,6 +182,13 @@ private extension ActionButton {
     func compactFont() -> ActionButton {
         controlSize = .small
         font = .systemFont(ofSize: 8)
+        return self
+    }
+
+    /// Todo 已有任务列表按需求放大 1.5 倍（8pt x1.5 = 12pt）
+    func taskRowFont() -> ActionButton {
+        controlSize = .regular
+        font = .systemFont(ofSize: 12)
         return self
     }
 }
