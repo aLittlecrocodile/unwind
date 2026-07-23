@@ -2,14 +2,17 @@
 
 一只常驻桌角的"打工小人" + 一个懂减压的智能体后端。它陪你分段打工（番茄钟 / 待办 / 久坐喝水提醒），压力上来时——**点一下 🎙 直接跟它说话**，Unwind 智能体会接住你：共情对话、CBT 认知重构、数息引导、放一段雨声、写一张安心签。Unwind 是减压产品：白噪音是用来"喘口气"的，不是哄睡的。
 
+桌面前端是原生 Swift 6 + AppKit（`native/`）——早期的 Electron + React 原型已下线，不再维护。
+
 ## 小人怎么玩
 
 | 动作 | 效果 |
 | --- | --- |
 | 点一下 🎙 | 开始说话，再点一下结束（按住说完松手也行）；流式 ASR → 决策智能体 → 流式 TTS，首句 1~2s |
-| 点小人 | 展开/收起打字面板（快捷 chips + 输入框），小人会晃一晃 |
-| 按住小人或状态胶囊拖动 | 把它挪到任何地方（位移超过 5px 才算拖，不会误触点击） |
-| 悬停 | 浮出工具条：**喘口气 ⤢**（完整 Unwind 主窗）· **工作台** · **躲起来**（藏 10 分钟，点 Dock 图标随时召回） |
+| 点小人 | 展开/收起打字面板（快捷 chips + 输入框） |
+| 拖拽小人 | 把它挪到任何地方（位移超过 5px 才算拖，不会误触点击） |
+| 右键小人 | 切换性别素材 |
+| 悬停 / 菜单 | **喘口气 ⤢**（完整 Unwind 主窗，原生重实现）· **工作台** · **躲起来**（暂避 10 分钟，Dock 图标随时召回） |
 | 鼠标移开 | 自动点击穿透，小人不挡背后的内容 |
 
 小人自己也会活着：待命时呼吸、每 4 秒眨一次眼；番茄钟进度就填充在脚下的状态胶囊里；久坐/喝水到点时气泡自动换成提醒并浮出**一键打卡** chips；一轮专注打完，它只发一条通知、在气泡里**邀请**你喘口气——不抢屏、不弹窗，主动权在你手里。放出去的环境音会有"♪ 曲名 · 停"胶囊，随时喊停。
@@ -23,7 +26,7 @@
 - **声音**：环境音即点即播、按需生成、在当前音频上 remix、天气顺势荐声
 - **厂内**：内搜实时问答（食堂 / 班车 / 流程类走确定性快路径，秒回并直接说出答案）
 
-完整 Unwind 主窗（从"喘口气 ⤢"进入）还有：语音通话、跟随呼吸（麦克风驱动的呼吸球）、压力粉碎机、声音涟漪场、技能矩阵与决策轨迹可视化。
+完整 Unwind 主窗（从"喘口气 ⤢"进入）还有：语音通话、跟随呼吸（麦克风驱动的呼吸球）、压力粉碎机、声音涟漪场、技能矩阵与决策轨迹可视化——`native/` 原生重实现了这整套页面，不是套壳加载网页。
 
 ## 目录结构
 
@@ -32,10 +35,8 @@
 ```
 .
 ├── backend/     Unwind 后端（FastAPI + Hermes 智能体决策层，独立仓库 aLittlecrocodile/Floppy 的源码快照）
-├── native/      Swift 6 + AppKit 原生 macOS 前端
+├── native/      Swift 6 + AppKit 原生 macOS 前端（唯一前端；SwiftPM，无第三方依赖）
 ├── scripts/     原生 `.app` 构建脚本
-├── electron/    Electron 主进程 / preload（小人窗口、点击穿透、手动拖拽、语音代理、Unwind 主窗）
-├── src/         React 渲染层（桌宠 PetMode、番茄钟工作台、语音 PTT、领域模型）
 └── ...
 ```
 
@@ -45,36 +46,7 @@
 
 ## 运行
 
-### 原生 macOS 前端（Swift + AppKit）
-
-原生版要求 macOS 13+，使用系统 SwiftPM 构建，不需要 Node、Electron 或完整 Xcode。后端仍需单独启动：
-
-```bash
-# 1. 后端
-cd backend
-source .venv/bin/activate
-uvicorn floppy_backend.main:app --host 127.0.0.1 --port 8000
-
-# 2. 原生前端（另开终端）
-./scripts/build-macos-app.sh
-open dist/Unwind.app
-```
-
-开发时也可以直接运行：
-
-```bash
-cd native
-swift run Unwind
-
-# Command Line Tools 环境下的内置测试（无需完整 Xcode）
-swift run Unwind --self-test
-```
-
-原生版与 Electron 版暂时并存，待功能验收后再移除旧前端。
-
-### Electron 旧前端
-
-前置：Node 18+、Python 3.11+、macOS（桌宠特性按 macOS 调教）。两个进程都要起：
+要求 macOS 13+。原生前端用系统自带 SwiftPM 构建，不需要 Node、Electron 或完整 Xcode（Command Line Tools 即可）。两个进程都要起：
 
 ```bash
 # 1. 后端（另开一个终端，常驻；桌面端固定连 127.0.0.1:8000）
@@ -83,12 +55,20 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[dev]'
 uvicorn floppy_backend.main:app --host 127.0.0.1 --port 8000
 
-# 2. 桌面端
-npm install
-npm run dev
+# 2. 原生前端
+./scripts/build-macos-app.sh
+open dist/Unwind.app
 ```
 
-小人会出现在屏幕右下角、Dock 正上方。
+开发时也可以跳过打包，直接运行：
+
+```bash
+cd native
+swift run Unwind
+
+# Command Line Tools 环境下的内置测试（无需完整 Xcode）
+swift run Unwind --self-test
+```
 
 **后端配置**（`backend/.env`，参照 `backend/.env.example`，环境变量统一 `FLOPPY_` 前缀）——不配也能跑，走本地兜底 provider：
 
@@ -101,11 +81,9 @@ npm run dev
 ## 排障
 
 - **小人不说话** → 先确认后端起在 8000；首次说话 macOS 会请求麦克风权限
-- **`npm run dev` 报 dlopen / 签名错误** → 依赖带了下载隔离属性，`xattr -dr com.apple.quarantine .` 后重试
-- **测试** → 后端 `cd backend && pytest`；桌面端 `npx tsc --noEmit`
+- **编译报 `missing required module 'SwiftShims'` 等模块缓存错误** → `rm -rf native/.build` 后重新 `swift build`（构建缓存不跨机器，`.gitignore` 已排除，不应再被提交）
+- **测试** → 后端 `cd backend && pytest`；原生前端 `cd native && swift run Unwind --self-test`
 
 ## 技术栈
 
-当前主前端为 Swift 6 + AppKit + AVFoundation，使用 SwiftPM 构建；后端为 FastAPI。Electron 39 + React 19 + TypeScript 仅作为迁移验收期间的旧版对照，确认功能对齐后再移除。
-
-> 两个踩坑记录：electron-vite 输出 ESM preload，`BrowserWindow` 需 `sandbox: false` 才能加载桥接；`-webkit-app-region: drag` 在"透明+无边框+点击穿透"窗口上不可靠，拖拽是 pointer 事件 + IPC 手动实现的（详见 `electron/main.ts` 与 `src/components/PetMode.tsx` 注释）。
+前端：Swift 6 + AppKit + AVFoundation，SwiftPM 构建，零第三方依赖，直连后端 HTTP/WebSocket（原生进程无跨域限制，不需要任何代理层）。后端：FastAPI + Hermes 智能体决策层。
