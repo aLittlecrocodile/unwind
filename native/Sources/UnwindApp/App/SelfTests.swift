@@ -47,6 +47,31 @@ enum SelfTests {
         _ = observableAudio.observePlayback { _, _ in secondAudioObserverCalls += 1 }
         observableAudio.stop()
         try check(firstAudioObserverCalls == 2 && secondAudioObserverCalls == 2, "multiple audio observers")
+
+        // Custom duration codable round-trip
+        var customState = AppState()
+        customState.focusSession.customDuration = .custom(focusMinutes: 35, breakMinutes: 7)
+        customState.settings.lastCustomFocusMinutes = 35
+        customState.settings.lastCustomBreakMinutes = 7
+        let customEncoded = try JSONEncoder.unwind.encode(customState)
+        let customDecoded = try JSONDecoder.unwind.decode(AppState.self, from: customEncoded)
+        try check(customDecoded.focusSession.customDuration == .custom(focusMinutes: 35, breakMinutes: 7), "custom duration codable")
+        try check(customDecoded.focusSession.duration.focusMinutes == 35, "custom duration focusMinutes")
+        try check(customDecoded.focusSession.duration.breakSeconds == 7 * 60, "custom duration breakSeconds")
+        try check(customDecoded.settings.lastCustomFocusMinutes == 35, "custom settings codable")
+
+        // Backward compat: state without customDuration decodes as nil
+        let oldState = AppState()
+        let oldEncoded = try JSONEncoder.unwind.encode(oldState)
+        let oldDecoded = try JSONDecoder.unwind.decode(AppState.self, from: oldEncoded)
+        try check(oldDecoded.focusSession.customDuration == nil, "backward compat custom duration")
+        try check(oldDecoded.focusSession.duration.focusMinutes == 25, "backward compat preset fallback")
+
+        // CompletedFocusBlock.effectiveMinutes
+        let presetBlock = CompletedFocusBlock(completedAt: .now, preset: .medium)
+        try check(presetBlock.effectiveMinutes == 50, "preset block effectiveMinutes")
+        let customBlock = CompletedFocusBlock(completedAt: .now, preset: .short, focusDuration: .custom(focusMinutes: 40, breakMinutes: 8))
+        try check(customBlock.effectiveMinutes == 40, "custom block effectiveMinutes")
     }
 
     private static func check(_ condition: @autoclosure () throws -> Bool, _ name: String) throws {

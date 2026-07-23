@@ -19,7 +19,8 @@ def generate_ambient_wav(output_path: Path, sound_type: str, duration_sec: int, 
     generator = GENERATORS.get(sound_type, _generate_pink_noise)
     samples = generator(duration_sec, sample_rate)
     with wave.open(str(output_path), "wb") as wav:
-        wav.setnchannels(1)
+        wav.setnch
+        annels(1)
         wav.setsampwidth(2)
         wav.setframerate(sample_rate)
         wav.writeframes(struct.pack(f"<{len(samples)}h", *samples))

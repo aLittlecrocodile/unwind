@@ -10,6 +10,27 @@ enum FocusPreset: Int, Codable, CaseIterable, Sendable {
     }
 }
 
+enum FocusDuration: Codable, Equatable, Sendable {
+    case preset(FocusPreset)
+    case custom(focusMinutes: Int, breakMinutes: Int)
+
+    var focusMinutes: Int {
+        switch self {
+        case .preset(let p): return p.rawValue
+        case .custom(let focus, _): return focus
+        }
+    }
+
+    var focusSeconds: Int { focusMinutes * 60 }
+
+    var breakSeconds: Int {
+        switch self {
+        case .preset(let p): return p.breakMinutes * 60
+        case .custom(_, let brk): return brk * 60
+        }
+    }
+}
+
 enum SessionPhase: String, Codable, Sendable {
     case idle, focus, `break`, paused
 }
@@ -17,11 +38,17 @@ enum SessionPhase: String, Codable, Sendable {
 struct FocusSession: Codable, Equatable, Sendable {
     var phase: SessionPhase = .idle
     var preset: FocusPreset = .short
+    var customDuration: FocusDuration?
     var taskID: UUID?
     var phaseDurationSeconds = 0
     var phaseEndsAt: Date?
     var pausedRemainingSeconds: Int?
     var pausedFromPhase: SessionPhase?
+
+    /// The effective duration source — custom if set, otherwise derived from preset.
+    var duration: FocusDuration {
+        customDuration ?? .preset(preset)
+    }
 
     func remainingSeconds(at now: Date = .now) -> Int {
         if phase == .paused { return max(0, pausedRemainingSeconds ?? 0) }
@@ -64,6 +91,11 @@ struct HealthState: Codable, Equatable, Sendable {
 struct CompletedFocusBlock: Codable, Equatable, Sendable {
     let completedAt: Date
     let preset: FocusPreset
+    var focusDuration: FocusDuration?
+
+    var effectiveMinutes: Int {
+        focusDuration?.focusMinutes ?? preset.rawValue
+    }
 }
 
 struct DailyStats: Equatable, Sendable {
@@ -76,6 +108,8 @@ struct DailyStats: Equatable, Sendable {
 struct AppSettings: Codable, Equatable, Sendable {
     var alwaysOnTop = true
     var speakReplies = true
+    var lastCustomFocusMinutes: Int = 25
+    var lastCustomBreakMinutes: Int = 5
 }
 
 struct AppState: Codable, Equatable, Sendable {

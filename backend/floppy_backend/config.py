@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     # Agent runtime: Hermes is the decision layer. It receives the (capped)
     # asset catalog and autonomously picks play/generate/remix — no local
     # scoring algorithm. Floppy executes the selected workflow in-process.
+    agent_runtime: str = "local"  # "local" | "hermes"
+    hermes_fallback_to_local: bool = True
     hermes_base_url: str = "http://127.0.0.1:8642"
     hermes_api_key: str | None = None
     hermes_model: str = "hermes-agent"

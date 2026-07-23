@@ -77,7 +77,7 @@ final class AppStore {
         let blocks = state.focusBlocks.filter { calendar.isDate($0.completedAt, inSameDayAs: day) }
         return DailyStats(
             pomodoroCount: blocks.count,
-            focusMinutes: blocks.reduce(0) { $0 + $1.preset.rawValue },
+            focusMinutes: blocks.reduce(0) { $0 + $1.effectiveMinutes },
             tasksCompleted: state.tasks.filter { $0.completedAt.map { calendar.isDate($0, inSameDayAs: day) } ?? false }.count,
             waterCount: state.waterLogs.filter { calendar.isDate($0, inSameDayAs: day) }.count
         )
@@ -141,10 +141,28 @@ final class AppStore {
         let seconds = preset.rawValue * 60
         state.focusSession.phase = .focus
         state.focusSession.preset = preset
+        state.focusSession.customDuration = nil
         state.focusSession.phaseDurationSeconds = seconds
         state.focusSession.phaseEndsAt = now().addingTimeInterval(TimeInterval(seconds))
         state.focusSession.pausedRemainingSeconds = nil
         state.focusSession.pausedFromPhase = nil
+        changed()
+    }
+
+    func startCustomFocus(focusMinutes: Int, breakMinutes: Int) {
+        let focus = max(1, min(240, focusMinutes))
+        let brk = max(1, min(240, breakMinutes))
+        let duration = FocusDuration.custom(focusMinutes: focus, breakMinutes: brk)
+        let seconds = duration.focusSeconds
+        state.focusSession.phase = .focus
+        state.focusSession.preset = .short
+        state.focusSession.customDuration = duration
+        state.focusSession.phaseDurationSeconds = seconds
+        state.focusSession.phaseEndsAt = now().addingTimeInterval(TimeInterval(seconds))
+        state.focusSession.pausedRemainingSeconds = nil
+        state.focusSession.pausedFromPhase = nil
+        state.settings.lastCustomFocusMinutes = focus
+        state.settings.lastCustomBreakMinutes = brk
         changed()
     }
 
@@ -221,11 +239,12 @@ final class AppStore {
 
     private func finishFocus() {
         let start = now().addingTimeInterval(-TimeInterval(state.focusSession.phaseDurationSeconds))
-        state.focusBlocks.append(.init(completedAt: now(), preset: state.focusSession.preset))
+        let duration = state.focusSession.duration
+        state.focusBlocks.append(.init(completedAt: now(), preset: state.focusSession.preset, focusDuration: state.focusSession.customDuration))
         if state.health.lastStandAt == nil || state.health.lastStandAt! < start {
             state.health.consecutiveSitFocusBlocks += 1
         }
-        let breakSeconds = state.focusSession.preset.breakMinutes * 60
+        let breakSeconds = duration.breakSeconds
         state.focusSession.phase = .break
         state.focusSession.phaseDurationSeconds = breakSeconds
         state.focusSession.phaseEndsAt = now().addingTimeInterval(TimeInterval(breakSeconds))

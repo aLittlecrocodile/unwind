@@ -13,6 +13,8 @@ final class WorkbenchWindowController: NSWindowController {
     private let statsLabel = NSTextField.label("")
     private let controls = NSStackView.horizontal(spacing: 8)
     private var storeObserver: UUID?
+    private var customButton: ActionButton!
+    private var customPopover: NSPopover?
 
     init(store: AppStore = .shared) {
         self.store = store
@@ -40,9 +42,12 @@ final class WorkbenchWindowController: NSWindowController {
         header.distribution = .fillProportionally
 
         let timerCard = CardView()
-        let presetButtons = NSStackView.horizontal(spacing: 8, views: FocusPreset.allCases.map { preset in
+        var presetViews: [NSView] = FocusPreset.allCases.map { preset in
             ActionButton("\(preset.rawValue)m") { [weak self] in self?.store.startFocus(preset) }
-        })
+        }
+        customButton = ActionButton("自定义") { [weak self] in self?.showCustomDurationPopover() }
+        presetViews.append(customButton)
+        let presetButtons = NSStackView.horizontal(spacing: 8, views: presetViews)
         let pause = ActionButton("暂停/继续") { [weak self] in
             guard let self else { return }
             self.store.state.focusSession.phase == .paused ? self.store.resume() : self.store.pause()
@@ -92,7 +97,12 @@ final class WorkbenchWindowController: NSWindowController {
 
     private func refresh() {
         let session = store.state.focusSession
-        let seconds = session.phase == .idle ? session.preset.rawValue * 60 : session.remainingSeconds()
+        let seconds: Int
+        if session.phase == .idle {
+            seconds = session.duration.focusSeconds
+        } else {
+            seconds = session.remainingSeconds()
+        }
         timerLabel.stringValue = String(format: "%02d:%02d", seconds / 60, seconds % 60)
         phaseLabel.stringValue = [
             SessionPhase.idle: "准备开始", .focus: "专注中", .break: "休息中", .paused: "已暂停"
@@ -111,5 +121,55 @@ final class WorkbenchWindowController: NSWindowController {
         }
         let stats = store.dailyStats
         statsLabel.stringValue = "今日：\(stats.pomodoroCount) 番茄 · \(stats.focusMinutes) 分钟 · 完成 \(stats.tasksCompleted) · 喝水 \(stats.waterCount)"
+    }
+
+    private func showCustomDurationPopover() {
+        customPopover?.close()
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.contentSize = NSSize(width: 230, height: 130)
+
+        let vc = NSViewController()
+        let view = NSView(frame: NSRect(origin: .zero, size: popover.contentSize))
+        vc.view = view
+
+        let intFormatter = NumberFormatter()
+        intFormatter.minimum = 1
+        intFormatter.maximum = 240
+        intFormatter.allowsFloats = false
+
+        let focusLabel = NSTextField.label("专注:")
+        let focusField = NSTextField()
+        focusField.formatter = intFormatter
+        focusField.integerValue = store.state.settings.lastCustomFocusMinutes
+        focusField.applyWarmInputStyle()
+        focusField.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        let focusUnit = NSTextField.label("分钟")
+
+        let breakLabel = NSTextField.label("休息:")
+        let breakField = NSTextField()
+        breakField.formatter = intFormatter
+        breakField.integerValue = store.state.settings.lastCustomBreakMinutes
+        breakField.applyWarmInputStyle()
+        breakField.widthAnchor.constraint(equalToConstant: 50).isActive = true
+        let breakUnit = NSTextField.label("分钟")
+
+        let startBtn = ActionButton("开始") { [weak self, weak popover] in
+            let focus = max(1, min(240, focusField.integerValue))
+            let brk = max(1, min(240, breakField.integerValue))
+            self?.store.startCustomFocus(focusMinutes: focus, breakMinutes: brk)
+            popover?.close()
+        }
+
+        let focusRow = NSStackView.horizontal(spacing: 6, views: [focusLabel, focusField, focusUnit])
+        let breakRow = NSStackView.horizontal(spacing: 6, views: [breakLabel, breakField, breakUnit])
+        let stack = NSStackView.vertical(spacing: 10, views: [focusRow, breakRow, startBtn])
+        stack.alignment = .centerX
+        view.addSubview(stack)
+        pin(stack, to: view, inset: 14)
+
+        popover.contentViewController = vc
+        popover.show(relativeTo: customButton.bounds, of: customButton, preferredEdge: .maxY)
+        customPopover = popover
     }
 }
