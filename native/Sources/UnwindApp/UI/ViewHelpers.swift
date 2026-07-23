@@ -8,6 +8,10 @@ enum UnwindPalette {
     static let inputSurface = NSColor(srgbRed: 1.000, green: 0.974, blue: 0.910, alpha: 1)
     static let selectionSurface = NSColor(srgbRed: 0.953, green: 0.831, blue: 0.631, alpha: 1)
     static let border = NSColor(srgbRed: 0.702, green: 0.537, blue: 0.337, alpha: 1)
+    // 桌宠相框：木色框体 + 朱砂内衬线（朱砂同时是全产品强调色）
+    static let wood = NSColor(srgbRed: 0.541, green: 0.416, blue: 0.282, alpha: 1)
+    static let woodDark = NSColor(srgbRed: 0.373, green: 0.275, blue: 0.196, alpha: 1)
+    static let vermilion = NSColor(srgbRed: 0.753, green: 0.353, blue: 0.239, alpha: 1)
 }
 
 final class ActionButton: NSButton {

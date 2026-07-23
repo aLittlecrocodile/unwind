@@ -25,7 +25,9 @@ final class PetWindowController: NSWindowController {
     private let input = PetTextField()
     private let chatCard = CardView()
     private let toolbar = NSStackView.horizontal(spacing: 6)
-    private let toolbarCard = CardView()
+    /// 图标条容器：透明，只承担布局和点击穿透判定；圆钮各自带底色
+    private let toolbarCard = NSView()
+    private var timerButton: IconButton?
     private let playingButton = ActionButton("", bezelStyle: .roundRect) {}
     private let micButton = PressButton(title: "🎙", target: nil, action: nil)
     private var clickTimer: Timer?
@@ -37,11 +39,13 @@ final class PetWindowController: NSWindowController {
     private var storeObservers: [UUID] = []
     private var audioObserver: UUID?
     private var isExpanded = false
-    /// 提醒/打卡芯片：悬浮在小人头顶，点一下直接完成打卡（不用开工作台）
-    private let statusChip = ActionButton("", bezelStyle: .roundRect) {}
+    /// 头顶 HUD：提醒一键打卡 + 番茄钟进度（见 PetChromeViews）
+    private let statusChip = HudChipView(frame: .zero)
+    /// 卷轴待办：点工具条"待办"图标，从小人上方展开（见 TodoScrollController）
+    private var todoScroll: TodoScrollController?
     private var lastBuddyState: BuddyState = .idle
 
-    // 折叠态在小人头顶留一条 34pt 的芯片位
+    // 折叠态在小人头顶留一条芯片位
     private let collapsedContentSize = NSSize(width: 150, height: 150)
     private let expandedContentSize = NSSize(width: 340, height: 370)
 
@@ -109,15 +113,22 @@ final class PetWindowController: NSWindowController {
         playingButton.isHidden = true
         playingButton.actionHandler = { AudioCoordinator.shared.stop() }
 
-        statusChip.font = .systemFont(ofSize: 11, weight: .medium)
         statusChip.isHidden = true
-        statusChip.actionHandler = { [weak self] in self?.ackReminder() }
+        statusChip.onTap = { [weak self] in self?.ackReminder() }
         root.addSubview(statusChip)
 
-        toolbar.addArrangedSubview(ActionButton("我起来了") { [weak self] in self?.store.recordStand() })
-        toolbar.addArrangedSubview(ActionButton("喘口气") { [weak self] in self?.onOpenUnwind?() })
-        toolbar.addArrangedSubview(ActionButton("工作台") { [weak self] in self?.onOpenWorkbench?() })
-        toolbar.addArrangedSubview(ActionButton("躲起来") { [weak self] in self?.onHideTemporarily?() })
+        let timer = IconButton(symbol: "timer", tip: "番茄钟") { [weak self] in self?.showTimerMenu() }
+        timerButton = timer
+        toolbar.addArrangedSubview(timer)
+        toolbar.addArrangedSubview(IconButton(symbol: "checklist", tip: "今日待办") { [weak self] in self?.toggleTodoScroll() })
+        toolbar.addArrangedSubview(IconButton(symbol: "figure.walk", tip: "我起来了") { [weak self] in self?.store.recordStand() })
+        toolbar.addArrangedSubview(IconButton(symbol: "wind", tip: "喘口气") { [weak self] in self?.onOpenUnwind?() })
+        toolbar.addArrangedSubview(IconButton(symbol: "square.grid.2x2", tip: "工作台") { [weak self] in self?.onOpenWorkbench?() })
+        toolbar.addArrangedSubview(IconButton(symbol: "moon.zzz", tip: "躲起来（10 分钟）") { [weak self] in
+            guard let self else { return }
+            self.todoScroll?.close(animated: false)
+            self.onHideTemporarily?()
+        })
         toolbarCard.addSubview(toolbar); pin(toolbar, to: toolbarCard, inset: 5)
         root.addSubview(toolbarCard)
 
@@ -190,14 +201,13 @@ final class PetWindowController: NSWindowController {
             // while the 42pt/52pt gaps keep it from covering the PNG artwork.
             chatCard.frame = NSRect(x: 15, y: 225, width: 310, height: 108)
             buddy.frame = NSRect(x: 122, y: 110, width: 108, height: 108)
-            // 四个按钮（我起来了/喘口气/工作台/躲起来）撑满整行，原先给三个按钮
-            // 留的 208pt 太窄，改成和聊天卡一样宽
-            toolbarCard.frame = NSRect(x: 15, y: 75, width: 310, height: 38)
+            // 图标工具条居中：6 × 28 + 间距 + 内边距
+            toolbarCard.frame = NSRect(x: 66, y: 72, width: 208, height: 40)
             statusChip.frame = .zero
         } else {
-            // 小人居中站底部，头顶留出提醒芯片的位置
+            // 小人居中站底部，头顶留 HUD 芯片位
             buddy.frame = NSRect(x: (collapsedContentSize.width - 108) / 2, y: 0, width: 108, height: 108)
-            statusChip.frame = NSRect(x: 0, y: 116, width: collapsedContentSize.width, height: 26)
+            statusChip.frame = NSRect(x: 5, y: 118, width: collapsedContentSize.width - 10, height: 24)
             chatCard.frame = .zero
             toolbarCard.frame = .zero
         }
@@ -250,10 +260,62 @@ final class PetWindowController: NSWindowController {
 
     private func endPTT() { ptt.endRecording() }
 
+    /// 卷轴待办：顶轴挂在图标条正下方展开/收起
+    private func toggleTodoScroll() {
+        guard let window else { return }
+        if todoScroll == nil {
+            let controller = TodoScrollController(store: store)
+            controller.onOpenWorkbench = { [weak self] in self?.onOpenWorkbench?() }
+            todoScroll = controller
+        }
+        let toolbarOnScreen = window.convertToScreen(toolbarCard.convert(toolbarCard.bounds, to: nil))
+        todoScroll?.toggle(below: toolbarOnScreen, fallbackAbove: window.frame)
+    }
+
+    /// 番茄钟小菜单：待机给三档时长，进行中给暂停/继续和结束；
+    /// 进度显示走小人头顶的 HUD 芯片，不需要额外窗口
+    private func showTimerMenu() {
+        guard let timerButton else { return }
+        let menu = NSMenu()
+        if store.state.focusSession.phase == .idle {
+            for preset in FocusPreset.allCases {
+                let item = NSMenuItem(title: "专注 \(preset.rawValue) 分钟", action: #selector(timerMenuStart(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = preset.rawValue
+                menu.addItem(item)
+            }
+        } else {
+            let paused = store.state.focusSession.phase == .paused
+            let pause = NSMenuItem(title: paused ? "继续" : "暂停", action: #selector(timerMenuPauseResume), keyEquivalent: "")
+            pause.target = self
+            menu.addItem(pause)
+            let end = NSMenuItem(title: "结束这一轮", action: #selector(timerMenuEnd), keyEquivalent: "")
+            end.target = self
+            menu.addItem(end)
+        }
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: timerButton.bounds.height + 6), in: timerButton)
+    }
+
+    @objc private func timerMenuStart(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? Int, let preset = FocusPreset(rawValue: raw) else { return }
+        store.startFocus(preset)
+    }
+
+    @objc private func timerMenuPauseResume() {
+        store.state.focusSession.phase == .paused ? store.resume() : store.pause()
+    }
+
+    @objc private func timerMenuEnd() {
+        store.endSession()
+    }
+
     private func drag(phase: NSEvent.Phase, point: NSPoint) {
         guard let window else { return }
         switch phase {
-        case .began: dragOrigin = window.frame.origin; dragMouseStart = point
+        case .began:
+            // 拖动时先把挂着的卷轴收掉，避免卷轴留在原地悬空
+            todoScroll?.close(animated: false)
+            dragOrigin = window.frame.origin; dragMouseStart = point
         case .changed:
             guard let origin = dragOrigin, let start = dragMouseStart else { return }
             window.setFrameOrigin(NSPoint(x: origin.x + point.x - start.x, y: origin.y + point.y - start.y))
@@ -277,15 +339,23 @@ final class PetWindowController: NSWindowController {
 
     private func refreshChip() {
         let text: String
+        var emphasized = false
         switch store.buddyState {
         case .stood: text = "起身打卡 ✓"
         case .hydrated: text = "补水打卡 ✓"
         case .done: text = "搞定一件 🎉"
-        case .water: text = "该喝水了 · 点我打卡"
-        case .tired: text = "坐久了 · 点我打卡"
-        case .idle, .focus, .rest: text = ""
+        case .water: text = "该喝水了 · 点我打卡"; emphasized = true
+        case .tired: text = "坐久了 · 点我打卡"; emphasized = true
+        case .focus: text = "专注中 · 还剩 \(max(1, (store.state.focusSession.remainingSeconds() + 59) / 60))m"
+        case .rest: text = "休息中 · 喘口气"
+        case .idle: text = ""
         }
-        statusChip.title = text
+        let session = store.state.focusSession
+        statusChip.progress = [.focus, .break].contains(session.phase) && session.phaseDurationSeconds > 0
+            ? 1 - CGFloat(session.remainingSeconds()) / CGFloat(session.phaseDurationSeconds)
+            : nil
+        statusChip.text = text
+        statusChip.emphasized = emphasized
         statusChip.isHidden = isExpanded || text.isEmpty
     }
 
