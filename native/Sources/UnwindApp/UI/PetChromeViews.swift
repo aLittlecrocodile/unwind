@@ -17,9 +17,13 @@ final class HudChipView: NSView {
     var progress: CGFloat? {
         didSet { needsDisplay = true }
     }
-    /// 提醒态（该喝水/坐久了）：朱砂描边 + 手型光标，暗示可点
+    /// 提醒态（该喝水/坐久了）：朱砂描边
     var emphasized = false {
         didSet { needsDisplay = true }
+    }
+    /// 可点（打卡/喘口气入口）：手型光标提示，和描边样式解耦
+    var clickable = false {
+        didSet { window?.invalidateCursorRects(for: self) }
     }
     var onTap: (() -> Void)?
 
@@ -60,7 +64,7 @@ final class HudChipView: NSView {
     }
 
     override func resetCursorRects() {
-        if emphasized { addCursorRect(bounds, cursor: .pointingHand) }
+        if clickable { addCursorRect(bounds, cursor: .pointingHand) }
     }
 
     override func mouseDown(with event: NSEvent) { onTap?() }

@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 
 final class PetPanel: NSPanel {
     override var canBecomeKey: Bool { true }
@@ -201,9 +202,9 @@ final class PetWindowController: NSWindowController {
             // while the 42pt/52pt gaps keep it from covering the PNG artwork.
             chatCard.frame = NSRect(x: 15, y: 225, width: 310, height: 108)
             buddy.frame = NSRect(x: 122, y: 110, width: 108, height: 108)
-            // 图标工具条居中：6 × 28 + 间距 + 内边距
+            // 图标工具条居中：6 × 28 + 间距 + 内边距；进度芯片挂在它下方
             toolbarCard.frame = NSRect(x: 66, y: 72, width: 208, height: 40)
-            statusChip.frame = .zero
+            statusChip.frame = NSRect(x: 70, y: 42, width: 200, height: 24)
         } else {
             // 小人居中站底部，头顶留 HUD 芯片位
             buddy.frame = NSRect(x: (collapsedContentSize.width - 108) / 2, y: 0, width: 108, height: 108)
@@ -254,8 +255,22 @@ final class PetWindowController: NSWindowController {
 
     private func startPTT() {
         assistantText = ""
-        do { try ptt.startRecording() }
-        catch { bubble.stringValue = error.localizedDescription }
+        // 先把权限问清楚再碰音频引擎：未授权时直接起 AVAudioEngine 会让
+        // TCC 弹窗和按住手势撞在一起（历史上直接把主线程撞卡死过）
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            do { try ptt.startRecording() }
+            catch { bubble.stringValue = error.localizedDescription }
+        case .notDetermined:
+            bubble.stringValue = "先允许麦克风权限，允许后再按一次"
+            AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
+                Task { @MainActor in
+                    self?.bubble.stringValue = granted ? "好了，按住 🎙 说话吧" : "没拿到麦克风权限，语音用不了"
+                }
+            }
+        default:
+            bubble.stringValue = "麦克风权限被拒过：系统设置 → 隐私与安全性 → 麦克风"
+        }
     }
 
     private func endPTT() { ptt.endRecording() }
@@ -340,30 +355,48 @@ final class PetWindowController: NSWindowController {
     private func refreshChip() {
         let text: String
         var emphasized = false
+        var clickable = false
         switch store.buddyState {
         case .stood: text = "起身打卡 ✓"
         case .hydrated: text = "补水打卡 ✓"
-        case .done: text = "搞定一件 🎉"
-        case .water: text = "该喝水了 · 点我打卡"; emphasized = true
-        case .tired: text = "坐久了 · 点我打卡"; emphasized = true
-        case .focus: text = "专注中 · 还剩 \(max(1, (store.state.focusSession.remainingSeconds() + 59) / 60))m"
-        case .rest: text = "休息中 · 喘口气"
+        case .done:
+            // 同一个庆祝态，两个来源：番茄钟打完 vs 勾掉一件任务
+            if store.state.focusSession.phase == .break {
+                text = "收工 🎉 点我喘口气"
+                emphasized = true
+                clickable = true
+            } else {
+                text = "搞定一件 🎉"
+            }
+        case .water: text = "该喝水了 · 点我打卡"; emphasized = true; clickable = true
+        case .tired: text = "坐久了 · 点我打卡"; emphasized = true; clickable = true
+        case .focus:
+            let seconds = store.state.focusSession.remainingSeconds()
+            text = String(format: "专注中 · %02d:%02d", seconds / 60, seconds % 60)
+        case .rest:
+            let seconds = store.state.focusSession.remainingSeconds()
+            text = String(format: "休息中 · %02d:%02d", seconds / 60, seconds % 60)
+            clickable = true
         case .idle: text = ""
         }
+        statusChip.clickable = clickable
         let session = store.state.focusSession
         statusChip.progress = [.focus, .break].contains(session.phase) && session.phaseDurationSeconds > 0
             ? 1 - CGFloat(session.remainingSeconds()) / CGFloat(session.phaseDurationSeconds)
             : nil
         statusChip.text = text
         statusChip.emphasized = emphasized
-        statusChip.isHidden = isExpanded || text.isEmpty
+        statusChip.isHidden = text.isEmpty
     }
 
-    /// 点提醒芯片 = 直接打卡，不需要打开工作台
+    /// 点芯片：提醒态直接打卡；收工/休息态是"喘口气"的邀请入口——
+    /// 主动权在用户手里，打完一轮不强弹任何窗口
     private func ackReminder() {
         switch store.buddyState {
         case .water: store.recordWater()
         case .tired: store.recordStand()
+        case .done where store.state.focusSession.phase == .break: onOpenUnwind?()
+        case .rest: onOpenUnwind?()
         default: break
         }
     }

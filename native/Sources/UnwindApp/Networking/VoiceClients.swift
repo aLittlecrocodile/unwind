@@ -41,6 +41,8 @@ final class PushToTalkClient {
     }
 
     func endRecording() {
+        // 没真正录上（比如权限弹窗打断了按住手势）就不给后端发空 utterance
+        guard microphone.running else { return }
         microphone.stop()
         socket?.send(.string("{\"type\":\"utterance_end\"}")) { [weak self] error in
             if let error { Task { @MainActor in self?.onError?(error.localizedDescription) } }

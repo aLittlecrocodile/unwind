@@ -32,14 +32,17 @@ final class PressButton: NSButton {
     var onPress: (() -> Void)?
     var onRelease: (() -> Void)?
 
+    // 不用 trackEvents 嵌套事件循环等松开：timeout .infinity 一旦撞上
+    // 系统弹窗（如首次麦克风授权）抢走 mouseUp，主线程会永远卡死在循环里。
+    // AppKit 本来就会把 mouseUp 送回接住 mouseDown 的视图，直接覆写即可。
     override func mouseDown(with event: NSEvent) {
         highlight(true)
         onPress?()
-        window?.trackEvents(matching: [.leftMouseUp], timeout: .infinity, mode: .eventTracking) { [weak self] event, _ in
-            guard event != nil else { return }
-            self?.highlight(false)
-            self?.onRelease?()
-        }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        highlight(false)
+        onRelease?()
     }
 }
 

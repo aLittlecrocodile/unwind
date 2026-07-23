@@ -47,6 +47,11 @@ final class AppStore {
         case "sit":
             state.health.consecutiveSitFocusBlocks = 2
             changed()
+        case "focus":
+            if let preset = FocusPreset(rawValue: 25) { startFocus(preset) }
+        case "finish":
+            // 立刻走完当前专注段（演示彩排/自动化验收用，不用干等倒计时）
+            if state.focusSession.phase == .focus { finishFocus() }
         default: break
         }
     }
