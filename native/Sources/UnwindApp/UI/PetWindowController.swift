@@ -37,8 +37,12 @@ final class PetWindowController: NSWindowController {
     private var storeObservers: [UUID] = []
     private var audioObserver: UUID?
     private var isExpanded = false
+    /// 提醒/打卡芯片：悬浮在小人头顶，点一下直接完成打卡（不用开工作台）
+    private let statusChip = ActionButton("", bezelStyle: .roundRect) {}
+    private var lastBuddyState: BuddyState = .idle
 
-    private let collapsedContentSize = NSSize(width: 108, height: 108)
+    // 折叠态在小人头顶留一条 34pt 的芯片位
+    private let collapsedContentSize = NSSize(width: 150, height: 150)
     private let expandedContentSize = NSSize(width: 340, height: 370)
 
     init(store: AppStore = .shared, backend: BackendClientProtocol = BackendClient.shared) {
@@ -105,6 +109,12 @@ final class PetWindowController: NSWindowController {
         playingButton.isHidden = true
         playingButton.actionHandler = { AudioCoordinator.shared.stop() }
 
+        statusChip.font = .systemFont(ofSize: 11, weight: .medium)
+        statusChip.isHidden = true
+        statusChip.actionHandler = { [weak self] in self?.ackReminder() }
+        root.addSubview(statusChip)
+
+        toolbar.addArrangedSubview(ActionButton("我起来了") { [weak self] in self?.store.recordStand() })
         toolbar.addArrangedSubview(ActionButton("喘口气") { [weak self] in self?.onOpenUnwind?() })
         toolbar.addArrangedSubview(ActionButton("工作台") { [weak self] in self?.onOpenWorkbench?() })
         toolbar.addArrangedSubview(ActionButton("躲起来") { [weak self] in self?.onHideTemporarily?() })
@@ -114,7 +124,7 @@ final class PetWindowController: NSWindowController {
         // The desktop pet switches between two known sizes.  Frames make the
         // expanded layout deterministic: chat (top), character (middle), and
         // controls (bottom) cannot overlap as the card contents change.
-        [chatCard, buddy, toolbarCard].forEach { $0.translatesAutoresizingMaskIntoConstraints = true }
+        [chatCard, buddy, toolbarCard, statusChip].forEach { $0.translatesAutoresizingMaskIntoConstraints = true }
         micButton.widthAnchor.constraint(equalToConstant: 30).isActive = true
         micButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
         layoutPet(expanded: false)
@@ -180,9 +190,14 @@ final class PetWindowController: NSWindowController {
             // while the 42pt/52pt gaps keep it from covering the PNG artwork.
             chatCard.frame = NSRect(x: 15, y: 225, width: 310, height: 108)
             buddy.frame = NSRect(x: 122, y: 110, width: 108, height: 108)
-            toolbarCard.frame = NSRect(x: 66, y: 75, width: 208, height: 38)
+            // 四个按钮（我起来了/喘口气/工作台/躲起来）撑满整行，原先给三个按钮
+            // 留的 208pt 太窄，改成和聊天卡一样宽
+            toolbarCard.frame = NSRect(x: 15, y: 75, width: 310, height: 38)
+            statusChip.frame = .zero
         } else {
-            buddy.frame = NSRect(origin: .zero, size: collapsedContentSize)
+            // 小人居中站底部，头顶留出提醒芯片的位置
+            buddy.frame = NSRect(x: (collapsedContentSize.width - 108) / 2, y: 0, width: 108, height: 108)
+            statusChip.frame = NSRect(x: 0, y: 116, width: collapsedContentSize.width, height: 26)
             chatCard.frame = .zero
             toolbarCard.frame = .zero
         }
@@ -248,7 +263,62 @@ final class PetWindowController: NSWindowController {
     }
 
     private func refresh() {
-        buddy.state = store.buddyState
+        let value = store.buddyState
+        if value != lastBuddyState {
+            // 起身/完成用"整只小人跳一下"庆祝——比原地缩放醒目得多，
+            // 且窗口坐标方向确定，不受 backing layer 坐标系翻转影响
+            if value == .stood { celebrateHop(second: false) }
+            if value == .done { celebrateHop(second: true) }
+            lastBuddyState = value
+        }
+        buddy.state = value
+        refreshChip()
+    }
+
+    private func refreshChip() {
+        let text: String
+        switch store.buddyState {
+        case .stood: text = "起身打卡 ✓"
+        case .hydrated: text = "补水打卡 ✓"
+        case .done: text = "搞定一件 🎉"
+        case .water: text = "该喝水了 · 点我打卡"
+        case .tired: text = "坐久了 · 点我打卡"
+        case .idle, .focus, .rest: text = ""
+        }
+        statusChip.title = text
+        statusChip.isHidden = isExpanded || text.isEmpty
+    }
+
+    /// 点提醒芯片 = 直接打卡，不需要打开工作台
+    private func ackReminder() {
+        switch store.buddyState {
+        case .water: store.recordWater()
+        case .tired: store.recordStand()
+        default: break
+        }
+    }
+
+    /// 小人原地起跳（带一点回弹落地）；second 为真时再补一小跳
+    private func celebrateHop(second: Bool) {
+        guard let window, window.isVisible, dragOrigin == nil else { return }
+        let base = window.frame
+        func hop(_ height: CGFloat, then: (() -> Void)? = nil) {
+            var up = base
+            up.origin.y += height
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = 0.16
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                window.animator().setFrame(up, display: true)
+            }) {
+                NSAnimationContext.runAnimationGroup({ context in
+                    context.duration = 0.20
+                    context.timingFunction = CAMediaTimingFunction(name: .easeIn)
+                    window.animator().setFrame(base, display: true)
+                }) { then?() }
+            }
+        }
+        // 姿势切换（站姿贴图）才是主角，窗口跳跃只做点缀，幅度收小
+        hop(12) { if second { hop(7) } }
     }
 
     private func refreshPlaying() {
@@ -260,7 +330,7 @@ final class PetWindowController: NSWindowController {
     private func updateClickThrough() {
         guard let window, window.isVisible, let root = window.contentView else { return }
         let local = window.convertPoint(fromScreen: NSEvent.mouseLocation)
-        let interactive = [chatCard, buddy, toolbarCard]
+        let interactive = [chatCard, buddy, toolbarCard, statusChip]
             .filter { !$0.isHidden }
             .contains { $0.frame.insetBy(dx: -4, dy: -4).contains(root.convert(local, from: nil)) }
         window.ignoresMouseEvents = !interactive

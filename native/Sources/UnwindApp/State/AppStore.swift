@@ -16,6 +16,39 @@ final class AppStore {
     init(state: AppState? = nil) {
         self.state = state ?? Self.load()
         startTicker()
+        Self.startDebugChannel()
+    }
+
+    // 本地调试/演示通道：shell 里发分布式通知即可触发状态动作，
+    // 驱动小人的动画和提醒（自动化测试、上台前彩排提醒场景都用它）。
+    // 用法：
+    //   osascript -l JavaScript -e 'ObjC.import("Foundation");
+    //     $.NSDistributedNotificationCenter.defaultCenter
+    //       .postNotificationNameObjectUserInfoDeliverImmediately(
+    //         "com.unwind.native.debug", null, $({action:"stand"}), true)'
+    // 支持 action：stand / water / done / thirst（强制口渴提醒）/ sit（强制久坐提醒）
+    private static func startDebugChannel() {
+        DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("com.unwind.native.debug"), object: nil, queue: nil
+        ) { note in
+            let action = (note.userInfo?["action"] as? String) ?? ""
+            Task { @MainActor in AppStore.shared.handleDebugAction(action) }
+        }
+    }
+
+    func handleDebugAction(_ action: String) {
+        switch action {
+        case "stand": recordStand()
+        case "water": recordWater()
+        case "done": setTransient(.done)
+        case "thirst":
+            state.health.lastWaterAt = now().addingTimeInterval(-4000)
+            changed()
+        case "sit":
+            state.health.consecutiveSitFocusBlocks = 2
+            changed()
+        default: break
+        }
     }
 
     var currentTask: TaskItem? { state.tasks.first { $0.id == state.focusSession.taskID } }
