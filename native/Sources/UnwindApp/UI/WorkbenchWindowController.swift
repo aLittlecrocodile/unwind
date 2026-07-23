@@ -77,7 +77,8 @@ final class WorkbenchWindowController: NSWindowController {
 
         let health = NSStackView.horizontal(spacing: 8, views: [
             ActionButton("我起来了") { [weak self] in self?.store.recordStand() },
-            ActionButton("喝水了") { [weak self] in self?.store.recordWater() }, statsLabel
+            ActionButton("喝水了") { [weak self] in self?.store.recordWater() },
+            ActionButton("归零") { [weak self] in self?.store.resetTodayStats() }, statsLabel
         ])
 
         let content = NSStackView.vertical(spacing: 14, views: [header, timerCard, todoCard, health])
