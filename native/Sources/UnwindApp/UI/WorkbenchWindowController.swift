@@ -6,23 +6,24 @@ final class WorkbenchWindowController: NSWindowController {
     var onOpenUnwind: (() -> Void)?
 
     private let store: AppStore
-    private let phaseLabel = NSTextField.label("")
-    private let timerLabel = NSTextField.label("25:00", font: .monospacedDigitSystemFont(ofSize: 38, weight: .semibold))
+    private let phaseLabel = NSTextField.label("", font: .systemFont(ofSize: 12))
+    private let timerLabel = NSTextField.label("25:00", font: .monospacedDigitSystemFont(ofSize: 35, weight: .semibold))
     private let taskField = NSTextField()
-    private let taskStack = NSStackView.vertical(spacing: 5)
-    private let statsLabel = NSTextField.label("")
-    private let controls = NSStackView.horizontal(spacing: 8)
+    private let taskStack = NSStackView.vertical(spacing: 3)
+    private let statsLabel = NSTextField.label("", font: .systemFont(ofSize: 12))
+    private let controls = NSStackView.vertical(spacing: 5)
     private var storeObserver: UUID?
     private var customButton: ActionButton!
     private var customPopover: NSPopover?
 
     init(store: AppStore = .shared) {
         self.store = store
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 720), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        // 整体缩小到原尺寸的 60%（470x720 -> 282x432）；字体在 60% 基础上再放大 50%
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 282, height: 432), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         super.init(window: window)
         window.title = "工作台"
         window.backgroundColor = UnwindPalette.canvas
-        window.minSize = NSSize(width: 430, height: 620)
+        window.minSize = NSSize(width: 258, height: 372)
         window.isReleasedWhenClosed = false
         buildUI()
         storeObserver = store.observeState { [weak self] _ in self?.refresh() }
@@ -32,67 +33,72 @@ final class WorkbenchWindowController: NSWindowController {
 
     private func buildUI() {
         guard let root = window?.contentView else { return }
-        let title = NSTextField.label("打工小人", font: .systemFont(ofSize: 22, weight: .bold))
-        let subtitle = NSTextField.label("陪你分段工作，顺手照顾自己。", color: .secondaryLabelColor)
+        let title = NSTextField.label("打工小人", font: .systemFont(ofSize: 20, weight: .bold))
+        let subtitle = NSTextField.label("陪你分段工作，顺手照顾自己。", font: .systemFont(ofSize: 12), color: .secondaryLabelColor)
         let headerButtons = NSStackView.horizontal(views: [
-            ActionButton("喘口气") { [weak self] in self?.onOpenUnwind?() },
-            ActionButton("回到桌宠") { [weak self] in self?.onReturnToPet?() }
+            ActionButton("喘口气") { [weak self] in self?.onOpenUnwind?() }.compactFont(),
+            ActionButton("回到桌宠") { [weak self] in self?.onReturnToPet?() }.compactFont()
         ])
-        let header = NSStackView.horizontal(spacing: 12, views: [NSStackView.vertical(spacing: 2, views: [title, subtitle]), headerButtons])
+        let header = NSStackView.horizontal(spacing: 7, views: [NSStackView.vertical(spacing: 1, views: [title, subtitle]), headerButtons])
         header.distribution = .fillProportionally
 
         let timerCard = CardView()
         var presetViews: [NSView] = FocusPreset.allCases.map { preset in
-            ActionButton("\(preset.rawValue)m") { [weak self] in self?.store.startFocus(preset) }
+            ActionButton("\(preset.rawValue)m") { [weak self] in self?.store.startFocus(preset) }.compactFont()
         }
-        customButton = ActionButton("自定义") { [weak self] in self?.showCustomDurationPopover() }
+        customButton = ActionButton("自定义") { [weak self] in self?.showCustomDurationPopover() }.compactFont()
         presetViews.append(customButton)
-        let presetButtons = NSStackView.horizontal(spacing: 8, views: presetViews)
+        let presetButtons = NSStackView.horizontal(spacing: 5, views: presetViews)
         let pause = ActionButton("暂停/继续") { [weak self] in
             guard let self else { return }
             self.store.state.focusSession.phase == .paused ? self.store.resume() : self.store.pause()
-        }
-        let end = ActionButton("结束") { [weak self] in self?.store.endSession() }
+        }.compactFont()
+        let end = ActionButton("结束") { [weak self] in self?.store.endSession() }.compactFont()
+        // 预设/自定义在第一行，暂停与结束单独换到第二行
+        let actionRow = NSStackView.horizontal(spacing: 5, views: [pause, end])
+        controls.alignment = .centerX
         controls.addArrangedSubview(presetButtons)
-        controls.addArrangedSubview(pause)
-        controls.addArrangedSubview(end)
-        let timerStack = NSStackView.vertical(spacing: 8, views: [phaseLabel, timerLabel, controls])
+        controls.addArrangedSubview(actionRow)
+        let timerStack = NSStackView.vertical(spacing: 5, views: [phaseLabel, timerLabel, controls])
         timerStack.alignment = .centerX
-        timerCard.addSubview(timerStack); pin(timerStack, to: timerCard, inset: 14)
+        timerCard.addSubview(timerStack); pin(timerStack, to: timerCard, inset: 8)
 
         let todoCard = CardView()
         taskField.placeholderString = "写下一个任务"
         taskField.applyWarmInputStyle()
+        taskField.font = .systemFont(ofSize: 12)
+        taskField.controlSize = .small
         let add = ActionButton("添加") { [weak self] in
             guard let self else { return }
             self.store.addTask(title: self.taskField.stringValue)
             self.taskField.stringValue = ""
-        }
-        let form = NSStackView.horizontal(spacing: 7, views: [taskField, add])
+        }.compactFont()
+        let form = NSStackView.horizontal(spacing: 4, views: [taskField, add])
         let scroll = NSScrollView()
         scroll.hasVerticalScroller = true
         scroll.applyWarmBackground()
         scroll.documentView = taskStack
         taskStack.translatesAutoresizingMaskIntoConstraints = false
         taskStack.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
-        let todo = NSStackView.vertical(spacing: 10, views: [NSTextField.label("今日 Todo", font: .systemFont(ofSize: 15, weight: .semibold)), form, scroll])
+        let todo = NSStackView.vertical(spacing: 6, views: [NSTextField.label("今日 Todo", font: .systemFont(ofSize: 14, weight: .semibold)), form, scroll])
         form.widthAnchor.constraint(equalTo: todo.widthAnchor).isActive = true
         scroll.widthAnchor.constraint(equalTo: todo.widthAnchor).isActive = true
-        todoCard.addSubview(todo); pin(todo, to: todoCard, inset: 14)
+        todoCard.addSubview(todo); pin(todo, to: todoCard, inset: 8)
 
-        let health = NSStackView.horizontal(spacing: 8, views: [
-            ActionButton("我起来了") { [weak self] in self?.store.recordStand() },
-            ActionButton("喝水了") { [weak self] in self?.store.recordWater() },
-            ActionButton("归零") { [weak self] in self?.store.resetTodayStats() }, statsLabel
+        let health = NSStackView.horizontal(spacing: 5, views: [
+            ActionButton("我起来了") { [weak self] in self?.store.recordStand() }.compactFont(),
+            ActionButton("喝水了") { [weak self] in self?.store.recordWater() }.compactFont(),
+            ActionButton("归零") { [weak self] in self?.store.resetTodayStats() }.compactFont(), statsLabel
         ])
 
-        let content = NSStackView.vertical(spacing: 14, views: [header, timerCard, todoCard, health])
-        root.addSubview(content); pin(content, to: root, inset: 18)
+        let content = NSStackView.vertical(spacing: 8, views: [header, timerCard, todoCard, health])
+        root.addSubview(content); pin(content, to: root, inset: 11)
         [header, timerCard, todoCard, health].forEach {
             $0.widthAnchor.constraint(equalTo: content.widthAnchor).isActive = true
         }
-        timerCard.heightAnchor.constraint(equalToConstant: 150).isActive = true
-        todoCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 300).isActive = true
+        // 计时 35pt + 两行按钮，卡片相应加高
+        timerCard.heightAnchor.constraint(equalToConstant: 135).isActive = true
+        todoCard.heightAnchor.constraint(greaterThanOrEqualToConstant: 180).isActive = true
     }
 
     private func refresh() {
@@ -108,14 +114,14 @@ final class WorkbenchWindowController: NSWindowController {
             SessionPhase.idle: "准备开始", .focus: "专注中", .break: "休息中", .paused: "已暂停"
         ][session.phase] ?? ""
         taskStack.arrangedSubviews.forEach { taskStack.removeArrangedSubview($0); $0.removeFromSuperview() }
-        if store.sortedTasks.isEmpty { taskStack.addArrangedSubview(NSTextField.label("还没有任务，先给小人安排点活。", color: .secondaryLabelColor)) }
+        if store.sortedTasks.isEmpty { taskStack.addArrangedSubview(NSTextField.label("还没有任务，先给小人安排点活。", font: .systemFont(ofSize: 12), color: .secondaryLabelColor)) }
         for task in store.sortedTasks {
-            let check = ActionButton(task.done ? "✓" : "○", bezelStyle: .inline) { [weak self] in self?.store.completeTask(task.id) }
-            let select = ActionButton(task.title, bezelStyle: .inline) { [weak self] in self?.store.selectTask(task.id) }
+            let check = ActionButton(task.done ? "✓" : "○", bezelStyle: .inline) { [weak self] in self?.store.completeTask(task.id) }.taskRowFont()
+            let select = ActionButton(task.title, bezelStyle: .inline) { [weak self] in self?.store.selectTask(task.id) }.taskRowFont()
             select.alignment = .left
             select.isEnabled = !task.done
-            let remove = ActionButton("×", bezelStyle: .inline) { [weak self] in self?.store.deleteTask(task.id) }
-            let row = NSStackView.horizontal(spacing: 6, views: [check, select, remove])
+            let remove = ActionButton("×", bezelStyle: .inline) { [weak self] in self?.store.deleteTask(task.id) }.taskRowFont()
+            let row = NSStackView.horizontal(spacing: 4, views: [check, select, remove])
             row.distribution = .fill
             taskStack.addArrangedSubview(row)
         }
@@ -171,5 +177,21 @@ final class WorkbenchWindowController: NSWindowController {
         popover.contentViewController = vc
         popover.show(relativeTo: customButton.bounds, of: customButton, preferredEdge: .maxY)
         customPopover = popover
+    }
+}
+
+/// 工作台通用按钮：60% 缩放后的 8pt 再放大 50% -> 12pt
+private extension ActionButton {
+    func compactFont() -> ActionButton {
+        controlSize = .regular
+        font = .systemFont(ofSize: 12)
+        return self
+    }
+
+    /// Todo 已有任务列表在通用字号基础上放大 1.5 倍（12pt x1.5 = 18pt）
+    func taskRowFont() -> ActionButton {
+        controlSize = .regular
+        font = .systemFont(ofSize: 18)
+        return self
     }
 }
