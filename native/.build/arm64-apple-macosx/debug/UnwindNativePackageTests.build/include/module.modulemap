@@ -1,3 +1,0 @@
-module UnwindNativePackageTests {
-    header "/Users/xiexie/Documents/GitHub/unwind/native/.build/arm64-apple-macosx/debug/UnwindNativePackageTests.build/include/UnwindNativePackageTests-Swift.h"
-}
