@@ -156,6 +156,21 @@ final class AppStore {
         changed()
     }
 
+    /// 归零今日统计：清掉今天的番茄记录、喝水记录，并抹去今天任务的完成时间戳
+    /// （任务本身保留、勾选状态不变——归零的是统计口径，不是待办数据）。
+    func resetTodayStats() {
+        let calendar = Calendar.current
+        let day = now()
+        state.focusBlocks.removeAll { calendar.isDate($0.completedAt, inSameDayAs: day) }
+        state.waterLogs.removeAll { calendar.isDate($0, inSameDayAs: day) }
+        for index in state.tasks.indices {
+            if let completedAt = state.tasks[index].completedAt, calendar.isDate(completedAt, inSameDayAs: day) {
+                state.tasks[index].completedAt = nil
+            }
+        }
+        changed()
+    }
+
     func setAlwaysOnTop(_ value: Bool) {
         state.settings.alwaysOnTop = value
         changed()
