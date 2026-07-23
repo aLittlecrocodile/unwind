@@ -35,6 +35,7 @@ final class UnwindWindowController: NSWindowController {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1220, height: 800), styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
         super.init(window: window)
         window.title = "Unwind · 把压力，呼出去"
+        window.backgroundColor = UnwindPalette.canvas
         window.minSize = NSSize(width: 980, height: 680)
         window.isReleasedWhenClosed = false
         buildUI()
@@ -95,6 +96,7 @@ final class UnwindWindowController: NSWindowController {
     private func buildChatColumn() -> NSView {
         let card = CardView()
         let scroll = NSScrollView(); scroll.hasVerticalScroller = true
+        scroll.applyWarmBackground()
         chatStack.alignment = .leading
         scroll.documentView = chatStack
         chatStack.translatesAutoresizingMaskIntoConstraints = false
@@ -105,6 +107,7 @@ final class UnwindWindowController: NSWindowController {
             chips.addArrangedSubview(ActionButton(text) { [weak self] in self?.send(text) })
         }
         prompt.placeholderString = "用一句话描述你现在的状态或想听的内容…"
+        prompt.applyWarmInputStyle()
         prompt.target = self; prompt.action = #selector(submitPrompt)
         pttButton.bezelStyle = .rounded
         let send = ActionButton("发送") { [weak self] in self?.send(self?.prompt.stringValue ?? "") }
@@ -138,6 +141,7 @@ final class UnwindWindowController: NSWindowController {
     private func buildSkillsColumn() -> NSView {
         let card = CardView()
         let scroll = NSScrollView(); scroll.hasVerticalScroller = true; scroll.documentView = skillStack
+        scroll.applyWarmBackground()
         skillStack.translatesAutoresizingMaskIntoConstraints = false
         skillStack.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
         let stack = NSStackView.vertical(spacing: 9, views: [NSTextField.label("技能矩阵", font: .systemFont(ofSize: 16, weight: .semibold)), scroll])

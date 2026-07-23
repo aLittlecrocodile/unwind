@@ -71,21 +71,21 @@ final class AppStore {
         buddyStateObservers[id] = nil
     }
 
-    func addTask(title: String, minutes: Int) {
+    func addTask(title: String) {
         guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        let task = TaskItem(title: title, estimateMinutes: minutes)
+        // Keep the persisted field for compatibility with existing state files;
+        // Todo items no longer expose or control a duration in the UI.
+        let task = TaskItem(title: title, estimateMinutes: state.focusSession.preset.rawValue)
         state.tasks.append(task)
         if state.focusSession.phase == .idle {
             state.focusSession.taskID = task.id
-            state.focusSession.preset = FocusPreset(rawValue: minutes) ?? .medium
         }
         changed()
     }
 
     func selectTask(_ id: UUID) {
-        guard let task = state.tasks.first(where: { $0.id == id && !$0.done }) else { return }
+        guard state.tasks.contains(where: { $0.id == id && !$0.done }) else { return }
         state.focusSession.taskID = id
-        state.focusSession.preset = FocusPreset(rawValue: task.estimateMinutes) ?? .medium
         changed()
     }
 

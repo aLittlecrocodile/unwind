@@ -9,7 +9,6 @@ final class WorkbenchWindowController: NSWindowController {
     private let phaseLabel = NSTextField.label("")
     private let timerLabel = NSTextField.label("25:00", font: .monospacedDigitSystemFont(ofSize: 38, weight: .semibold))
     private let taskField = NSTextField()
-    private let estimate = NSPopUpButton()
     private let taskStack = NSStackView.vertical(spacing: 5)
     private let statsLabel = NSTextField.label("")
     private let controls = NSStackView.horizontal(spacing: 8)
@@ -20,6 +19,7 @@ final class WorkbenchWindowController: NSWindowController {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 720), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         super.init(window: window)
         window.title = "Unwind 工作台"
+        window.backgroundColor = UnwindPalette.canvas
         window.minSize = NSSize(width: 430, height: 620)
         window.isReleasedWhenClosed = false
         buildUI()
@@ -57,16 +57,16 @@ final class WorkbenchWindowController: NSWindowController {
 
         let todoCard = CardView()
         taskField.placeholderString = "写下一个任务"
-        estimate.addItems(withTitles: ["25m", "50m", "90m"])
-        estimate.selectItem(withTitle: "50m")
+        taskField.applyWarmInputStyle()
         let add = ActionButton("添加") { [weak self] in
             guard let self else { return }
-            self.store.addTask(title: self.taskField.stringValue, minutes: Int(self.estimate.titleOfSelectedItem?.dropLast() ?? "50") ?? 50)
+            self.store.addTask(title: self.taskField.stringValue)
             self.taskField.stringValue = ""
         }
-        let form = NSStackView.horizontal(spacing: 7, views: [taskField, estimate, add])
+        let form = NSStackView.horizontal(spacing: 7, views: [taskField, add])
         let scroll = NSScrollView()
         scroll.hasVerticalScroller = true
+        scroll.applyWarmBackground()
         scroll.documentView = taskStack
         taskStack.translatesAutoresizingMaskIntoConstraints = false
         taskStack.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
@@ -103,9 +103,8 @@ final class WorkbenchWindowController: NSWindowController {
             let select = ActionButton(task.title, bezelStyle: .inline) { [weak self] in self?.store.selectTask(task.id) }
             select.alignment = .left
             select.isEnabled = !task.done
-            let meta = NSTextField.label("\(task.estimateMinutes) 分钟", font: .systemFont(ofSize: 11), color: .secondaryLabelColor)
             let remove = ActionButton("×", bezelStyle: .inline) { [weak self] in self?.store.deleteTask(task.id) }
-            let row = NSStackView.horizontal(spacing: 6, views: [check, select, meta, remove])
+            let row = NSStackView.horizontal(spacing: 6, views: [check, select, remove])
             row.distribution = .fill
             taskStack.addArrangedSubview(row)
         }

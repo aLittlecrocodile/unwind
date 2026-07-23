@@ -1,5 +1,15 @@
 import AppKit
 
+enum UnwindPalette {
+    static let canvas = NSColor(srgbRed: 0.969, green: 0.929, blue: 0.855, alpha: 1)
+    static let surface = NSColor(srgbRed: 1.000, green: 0.949, blue: 0.835, alpha: 1)
+    static let insetSurface = NSColor(srgbRed: 0.973, green: 0.886, blue: 0.718, alpha: 1)
+    static let elevatedSurface = NSColor(srgbRed: 0.953, green: 0.847, blue: 0.659, alpha: 1)
+    static let inputSurface = NSColor(srgbRed: 1.000, green: 0.974, blue: 0.910, alpha: 1)
+    static let selectionSurface = NSColor(srgbRed: 0.953, green: 0.831, blue: 0.631, alpha: 1)
+    static let border = NSColor(srgbRed: 0.702, green: 0.537, blue: 0.337, alpha: 1)
+}
+
 final class ActionButton: NSButton {
     var actionHandler: (() -> Void)?
 
@@ -38,6 +48,20 @@ extension NSTextField {
         label.lineBreakMode = .byWordWrapping
         return label
     }
+
+    func applyWarmInputStyle() {
+        drawsBackground = true
+        backgroundColor = UnwindPalette.inputSurface
+    }
+}
+
+extension NSScrollView {
+    func applyWarmBackground() {
+        drawsBackground = true
+        backgroundColor = UnwindPalette.surface
+        contentView.drawsBackground = true
+        contentView.backgroundColor = UnwindPalette.surface
+    }
 }
 
 extension NSStackView {
@@ -58,19 +82,46 @@ extension NSStackView {
     }
 }
 
-final class CardView: NSVisualEffectView {
+final class CardView: NSView {
+    private let fillKind: FillKind
+
+    private enum FillKind {
+        case surface, inset, elevated, selection
+    }
+
     init(material: NSVisualEffectView.Material = .contentBackground) {
+        switch material {
+        case .underWindowBackground: fillKind = .inset
+        case .hudWindow: fillKind = .elevated
+        case .selection: fillKind = .selection
+        default: fillKind = .surface
+        }
         super.init(frame: .zero)
-        self.material = material
-        blendingMode = .withinWindow
-        state = .active
         wantsLayer = true
         layer?.cornerRadius = 10
+        layer?.masksToBounds = true
         layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.35).cgColor
+        updateWarmColors()
     }
 
     required init?(coder: NSCoder) { nil }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateWarmColors()
+    }
+
+    private func updateWarmColors() {
+        let fill: NSColor
+        switch fillKind {
+        case .surface: fill = UnwindPalette.surface
+        case .inset: fill = UnwindPalette.insetSurface
+        case .elevated: fill = UnwindPalette.elevatedSurface
+        case .selection: fill = UnwindPalette.selectionSurface
+        }
+        layer?.backgroundColor = fill.cgColor
+        layer?.borderColor = UnwindPalette.border.withAlphaComponent(0.82).cgColor
+    }
 }
 
 @MainActor

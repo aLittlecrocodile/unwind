@@ -81,6 +81,7 @@ final class PetWindowController: NSWindowController {
         guard let root = window?.contentView else { return }
         root.addSubview(chatCard)
         input.placeholderString = "打字也行…"
+        input.applyWarmInputStyle()
         let send = ActionButton("发送") { [weak self] in self?.sendChat(self?.input.stringValue ?? "") }
         let chips = NSStackView.horizontal(spacing: 4, views: [
             ActionButton("压力好大") { [weak self] in self?.sendChat("我压力好大") },
