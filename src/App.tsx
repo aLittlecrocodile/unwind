@@ -66,6 +66,7 @@ function AppContent(): React.JSX.Element {
         progress={progress}
         waterDue={waterDue}
         tiredDue={tiredDue}
+        isFocusing={phase === 'focus'}
         onStandUp={() => dispatch({ type: 'confirm-stood-up' })}
         onDrinkWater={() => dispatch({ type: 'confirm-drank-water' })}
         onExpand={() => dispatch({ type: 'set-compact-mode', compact: false })}

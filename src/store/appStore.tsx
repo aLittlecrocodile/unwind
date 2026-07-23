@@ -142,15 +142,16 @@ function reducer(state: AppState, action: Action): AppState {
       // 起身打卡有效期覆盖"刚结束的这个专注段"，而不是"最近 1 毫秒"——
       // 后者几乎不可能为真，导致哪怕这一段里刚起身过，久坐计数照样 +1。
       const blockStartedAt = Date.now() - state.focusSession.phaseDurationSeconds * 1000
-      const health = state.health.lastStandAt !== null && state.health.lastStandAt >= blockStartedAt
-        ? state.health
-        : recordSatThroughFocusBlock(state.health)
+      const stoodDuringBlock = state.health.lastStandAt !== null && state.health.lastStandAt >= blockStartedAt
+      const health = stoodDuringBlock ? state.health : recordSatThroughFocusBlock(state.health)
+      // 这一段刚好压到久坐阈值：久坐提醒直接取代"任务搞定啦"欢呼，不叠两段动画。
+      const justBecameTired = !stoodDuringBlock && isTiredDue(health)
       return {
         ...state,
         focusBlocks: [...state.focusBlocks, block],
         health,
         focusSession: startBreak(state.focusSession),
-        transientState: 'done'
+        transientState: justBecameTired ? 'tired' : 'done'
       }
     }
 
@@ -194,7 +195,8 @@ const AppContext = createContext<AppContextValue | null>(null)
 function deriveBuddyState(state: AppState): BuddyState {
   if (state.transientState) return state.transientState
   if (isWaterDue(state.health)) return 'water'
-  if (isTiredDue(state.health)) return 'tired'
+  // 久坐提醒不打断专注：只在专注阶段之外才允许抢占小人状态。
+  if (state.focusSession.phase !== 'focus' && isTiredDue(state.health)) return 'tired'
   if (state.focusSession.phase === 'focus') return 'focus'
   if (state.focusSession.phase === 'break') return 'rest'
   if (state.focusSession.phase === 'paused') return 'idle'

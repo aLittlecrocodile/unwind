@@ -12,6 +12,8 @@ interface PetModeProps {
   progress: number | null
   waterDue: boolean
   tiredDue: boolean
+  /** 专注中久坐提醒不打断，气泡/chips 让位给专注场景 */
+  isFocusing: boolean
   onStandUp: () => void
   onDrinkWater: () => void
   onExpand: () => void
@@ -32,6 +34,7 @@ export function PetMode({
   progress,
   waterDue,
   tiredDue,
+  isFocusing,
   onStandUp,
   onDrinkWater,
   onExpand
@@ -258,9 +261,10 @@ export function PetMode({
   }
 
   // 没有对话内容时，气泡展示当下最要紧的场景（喝水/久坐 > 休息邀请 > 待命提示）
+  // 久坐提醒不打断专注：专注中即使 tiredDue 为真也不抢气泡。
   let contextText = IDLE_BUBBLE
   let contextChips: { label: string; run: () => void }[] = []
-  if (waterDue || tiredDue) {
+  if (waterDue || (tiredDue && !isFocusing)) {
     contextText = waterDue ? '一小时没喝水啦，润一口再战？' : '坐满两轮了，起来抖一抖？'
     contextChips = [
       { label: '我起来了', run: () => { onStandUp(); say('起身打卡！身体会谢你的') } },
