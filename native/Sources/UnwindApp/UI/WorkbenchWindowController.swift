@@ -19,7 +19,7 @@ final class WorkbenchWindowController: NSWindowController {
         self.store = store
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 470, height: 720), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         super.init(window: window)
-        window.title = "Unwind 工作台"
+        window.title = "工作台"
         window.minSize = NSSize(width: 430, height: 620)
         window.isReleasedWhenClosed = false
         buildUI()
